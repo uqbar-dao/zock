@@ -28,6 +28,10 @@ func hash_noun{hp : HashBuiltin*}(n : Noun*) -> (res):
   end
 end
 
+func verify_merkle_proof{hp : HashBuiltin*}(proof : felt*):
+  return()
+end
+
 func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*}():
   alloc_locals
   let (__fp__, _) = get_fp_and_pc()
