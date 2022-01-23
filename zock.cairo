@@ -37,6 +37,9 @@ func verify_axis{hp : HashBuiltin*}(root, leaf, axis):
   # - if axis is 1, check that root == leaf
   # - check whether (root, axis) already computed, return if yes
   # - load (root, axis) into segment 'proof'
+  #    SAMPLE CODE
+  #     local x : felt**
+  #     %{ ids.x = segments.gen_arg([[1, 2], [3, 4]]) %}
   # - verify_merkle(proof, axis)
   ret
 end
