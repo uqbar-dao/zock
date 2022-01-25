@@ -63,12 +63,12 @@ func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*}():
   let (h_n2_6_7) = hash_noun{hp=pedersen_ptr}(n=&n2_6_7)
   let (h_n4_5_3) = hash_noun{hp=pedersen_ptr}(n=&n4_5_3)
   let (h_n4_5_6_7) = hash_noun{hp=pedersen_ptr}(n=&n4_5_6_7)
-  serialize_word(h_a4)
-  serialize_word(h_a5)
-  serialize_word(h_a6)
-  serialize_word(h_a7)
-  serialize_word(h_n4_5)
-  serialize_word(h_n4_5_3)
-  serialize_word(h_n4_5_6_7)
+
+  %{
+    x = 469486474782544164430568959439120883383782181399389907385047779197726806430
+    print(str(x))
+    print("timtime")
+  %}
+
   return()
 end
