@@ -19,7 +19,7 @@ Run
 ```
 cairo-run --program out.hash_noun.json --layout=small --print_output
 
-cairo-run --program out.zock.json --layout=small --print_output
+cairo-run --program out.zock.json --layout=small --print_output --program_input input.json
 ```
 
 ## what you're looking at when you run

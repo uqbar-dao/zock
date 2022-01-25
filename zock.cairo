@@ -44,8 +44,23 @@ func verify_axis{hp : HashBuiltin*}(root, leaf, axis):
   ret
 end
 
+func tmp_print_hints(root : felt, axis : felt):
+  # TRY SEGMENTS
+  %{
+    r = str(ids.root)
+    a = str(ids.axis)
+    print(r)
+    print(a)
+  %}
+  return()
+end
+# print(program_input['mproofs'][r][a])
+
 func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*}():
   alloc_locals
+ 
+  local r23 = -1024168008553002790667416331076178940052697074220694435907157227142754829457
+  tmp_print_hints(r23, 3)
 
   # right sibling hash in [2, 3]
   local auth_path2 = 936823097115478672163131070534991867793647843312823827742596382032679996195
