@@ -49,8 +49,8 @@ end
 
 # Nock 0
 # s, f: subject, formula
-# leaf: hashed value or root of subtree; result of running 0
-func zero{hp : HashBuiltin*}(s, f, axis, leaf) -> (res):
+# result: hashed value or root of subtree; result of running 0
+func zero{hp : HashBuiltin*}(s, f, axis, result) -> (res):
   alloc_locals
 
   if axis == 0:
@@ -63,13 +63,93 @@ func zero{hp : HashBuiltin*}(s, f, axis, leaf) -> (res):
   assert f = h
 
   if axis == 1:
-    assert s = leaf
-    return(s)
+    assert s = result
+    return(result)
   end
 
-  let (root) = root_from_axis{hp=hp}(s, leaf, axis) 
+  let (root) = root_from_axis{hp=hp}(s, result, axis) 
   assert root = s
-  return(s)
+  return(result)
+end
+
+# result: hashed value or root of subtree; result of running 1
+func one{hp : HashBuiltin*}(s, f, result) -> (res):
+  let (h) = hash2{hash_ptr=hp}(x=h1, y=result)
+  assert f = h
+  return (result)
+end
+
+# sf1: first subformula
+# sf2: second subformula
+# result: hashed value or root of subtree; result of running 2
+func two{hp : HashBuiltin*}(s, f, sf1, sf2) -> (res):
+  alloc_locals
+
+  let (h_sf1_sf2) = hash2{hash_ptr=hp}(x=sf1, y=sf2)
+  let (h_f) = hash2{hash_ptr=hp}(x=h2, y=h_sf1_sf2)
+  assert f = h_f
+
+  let (res_sf1) = verify{hp=hp}(s, sf1)
+  let (res_sf2) = verify{hp=hp}(s, sf2)
+ 
+  let (result) = verify{hp=hp}(res_sf1, res_sf2)
+  return(result)
+end
+
+# if head is 0, then this is an atom
+func three{hp : HashBuiltin*}(s, f, sf, atom, head, tail) -> (res):
+  let (h) = hash2{hash_ptr=hp}(x=h3, y=sf)
+  assert f = h
+
+  # atom
+  if head == 0:
+    let (res) = verify(s, sf)
+    let (h_a) = hash2{hash_ptr=hp}(x=atom, y=0)
+    assert h_a = res
+    return(h1)
+  end
+
+  # cell
+  let (res) = verify(s, sf)
+  let (h_ht) = hash2{hash_ptr=hp}(x=head, y=tail)
+  assert h_ht = res
+  return(h0)
+end
+
+# sf: subformula
+# atom: atom returned by subformula
+func four{hp : HashBuiltin*}(s, f, sf, atom) -> (res):
+  let (h) = hash2{hash_ptr=hp}(x=h4, y=sf)
+  assert f = h
+
+  let (res) = verify(s, sf)
+  let (h_a_dec) = hash2{hash_ptr=hp}(x=atom - 1, y=0)
+  assert h_a_dec = res
+  let (h_a) = hash2{hash_ptr=hp}(x=atom, y=0)
+  return(h_a)
+end
+
+func five{hp : HashBuiltin*}(s, f, sf1, sf2) -> (res):
+  alloc_locals
+
+  let (h_sf1_sf2) = hash2{hash_ptr=hp}(x=sf1, y=sf2)
+  let (h_f) = hash2{hash_ptr=hp}(x=h5, y=h_sf1_sf2)
+  assert f = h_f
+
+  let (rsf1) = verify{hp=hp}(s, sf1)
+  local res_sf1 = rsf1
+  let (res_sf2) = verify{hp=hp}(s, sf2)
+ 
+  if res_sf1 == res_sf2:
+    return(h0)
+  end
+  return(h1)
+end
+
+func verify{hp : HashBuiltin*}(s, f) -> (res):
+  # lookup (s, f); make a Nock struct
+  # jump based on value of the opcode in struct
+  return(0)
 end
 
 func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
