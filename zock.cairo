@@ -47,17 +47,6 @@ func root_from_axis{hp : HashBuiltin*}(root, leaf, axis) -> (root):
     return root_from_axis(root, leaf=h, axis=(axis -1) / 2)
 end
 
-func verify_formula{hp : HashBuiltin*}(f, opcode_hash, rest_hash):
-  let (h) = hash2{hash_ptr=hp}(x=opcode_hash, y=rest_hash)
-  assert f = h
-  return()
-end
-
-func hash_val{hp : HashBuiltin*}(v : felt) -> (hash : felt):
-  let (hash) = hash2{hash_ptr=hp}(x=v, y=0)
-  return(hash=hash)
-end
-
 # Nock 0
 # s, f: subject, formula
 # leaf: hashed value or root of subtree; result of running 0
@@ -69,8 +58,9 @@ func zero{hp : HashBuiltin*}(s, f, axis, leaf) -> (res):
   end
 
   # assert that formula is [0 axis]
-  # let h_axis = hash_val(axis)
-  # verify_formula{hp=hp}(f=f, opcode_hash=h0, rest_hash=h_axis)
+  let (h_axis) = hash2{hash_ptr=hp}(axis, 0)
+  let (h) = hash2{hash_ptr=hp}(x=h0, y=h_axis)
+  assert f = h
 
   if axis == 1:
     assert s = leaf
@@ -89,14 +79,16 @@ func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
   # [[4 5] 6 7]
   local s = 1832969563318038202482355323522607828463192350149403022354941371033553420549
   # [0 2]
-  local f = 2920760503393641840990351232074818450843248133728638245225608299873225911759
+  local f02 = 2920760503393641840990351232074818450843248133728638245225608299873225911759
+  # [0 7]
+  local f07 = 2158122302526224927154186209761230448692469586990117158947361357036821155407
   # [4 5]
   local leaf2 = 1506610249047466047325607308647502845160729906712972118690756978255845486763
   # [6 7]
   local leaf3 = 1457137102687840622469998386657531077922059188363371731706856889535607109733
   local leaf7 = 2258442912665439649622769515993460039756024697697714582745734598954638194578
 
-  let (res) = zero{hp=pedersen_ptr}(s, f, 7, leaf7)
+  let (res) = zero{hp=pedersen_ptr}(s, f07, 7, leaf7)
   %{ print(ids.res) %}
   serialize_word(res)
   return()
