@@ -1,9 +1,11 @@
-%builtins output pedersen
+%builtins output pedersen range_check
 
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.serialize import serialize_word
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.hash import hash2
+from starkware.cairo.common.math import abs_value
+from starkware.cairo.common.math import sign 
 
 func verify_merkle{hp : HashBuiltin*}(auth_path : felt*, leaf, axis) -> (root):
   if axis == 2:
@@ -56,11 +58,13 @@ func tmp_print_hints(root : felt, axis : felt):
 end
 # print(program_input['mproofs'][r][a])
 
-func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*}():
+func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
   alloc_locals
  
-  local r23 = -1024168008553002790667416331076178940052697074220694435907157227142754829457
-  tmp_print_hints(r23, 3)
+  let (s) = hash2{hash_ptr=pedersen_ptr}(2, 0)
+  %{ print(ids.s) %}
+
+  # tmp_print_hints(r23, 3)
 
   # right sibling hash in [2, 3]
   local auth_path2 = 936823097115478672163131070534991867793647843312823827742596382032679996195

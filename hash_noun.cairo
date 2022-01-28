@@ -1,9 +1,10 @@
-%builtins output pedersen
+%builtins output pedersen range_check
 
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.serialize import serialize_word
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.hash import hash2
+from starkware.cairo.common.math import abs_value
 
 struct Noun:
   member is_atom: felt    # 0 true, 1 false; as is proper
@@ -32,7 +33,13 @@ func verify_merkle_proof{hp : HashBuiltin*}(proof : felt*):
   return()
 end
 
-func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*}():
+func tmp{output_ptr : felt*}(v : felt):
+  serialize_word(v)
+  %{ print(ids.example) %}
+  return()
+end
+
+func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
   alloc_locals
   let (__fp__, _) = get_fp_and_pc()
 
@@ -53,22 +60,18 @@ func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*}():
   
   let (h_a2) = hash_noun{hp=pedersen_ptr}(n=&a2)
   let (h_a3) = hash_noun{hp=pedersen_ptr}(n=&a3)
-  let (h_a4) = hash_noun{hp=pedersen_ptr}(n=&a4)
-  let (h_a5) = hash_noun{hp=pedersen_ptr}(n=&a5)
-  let (h_a6) = hash_noun{hp=pedersen_ptr}(n=&a6)
-  let (h_a7) = hash_noun{hp=pedersen_ptr}(n=&a7)
   let (h_n2_3) = hash_noun{hp=pedersen_ptr}(n=&n2_3)
-  let (h_n4_5) = hash_noun{hp=pedersen_ptr}(n=&n4_5)
-  let (h_n6_7) = hash_noun{hp=pedersen_ptr}(n=&n6_7)
-  let (h_n2_6_7) = hash_noun{hp=pedersen_ptr}(n=&n2_6_7)
-  let (h_n4_5_3) = hash_noun{hp=pedersen_ptr}(n=&n4_5_3)
-  let (h_n4_5_6_7) = hash_noun{hp=pedersen_ptr}(n=&n4_5_6_7)
+  let (sanity) = hash2{hash_ptr=pedersen_ptr}(1637368371864026355245122316446106576874611007407245016652355316950184561542, 936823097115478672163131070534991867793647843312823827742596382032679996195)
 
-  %{
-    x = 469486474782544164430568959439120883383782181399389907385047779197726806430
-    print(str(x))
-    print("timtime")
+  local x = -1024168008553002790667416331076178940052697074220694435907157227142754829457
+  local y = 1024168008553002790667416331076178940052697074220694435907157227142754829457
+  %{ 
+    from starkware.cairo.common.math_utils import as_int
+    print(as_int(ids.x, PRIME)) 
+    print(as_int(ids.y, PRIME))
   %}
+  serialize_word(x)
+  serialize_word(y)
 
   return()
 end

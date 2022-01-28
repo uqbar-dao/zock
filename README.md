@@ -22,15 +22,13 @@ cairo-run --program out.hash_noun.json --layout=small --print_output
 cairo-run --program out.zock.json --layout=small --print_output --program_input input.json
 ```
 
-## what you're looking at when you run
+## troubleshooting
 
-### hash_noun
-The first two outputs are Pedersen hashes of the atoms 2 & 3, respectively. The third output is the Merkle root of the noun with those atoms in head+tail position.
-
-### zock
-Outputs:
-1. merkle root from checking axis 2
-2. merkle root from checking axis 3
-3. a bad merkle root (check axis 3 with the wrong proof)
-4. the desired merkle root
-
+### handling Cairo negative numbers
+in cairo you only have values in the range [0,p-1], integers in the range [(p-1)/2,p-1] are "treated as" negative. Use `as_int` from `common.math_utils` to handle this.
+```
+%{ 
+  from starkware.cairo.common.math_utils import as_int 
+  print(as_int(ids.x, PRIME)) 
+%}
+```
