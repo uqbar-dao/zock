@@ -32,6 +32,8 @@ cairo-compile zock.cairo --output out.zock.json
 Run
 ```
 cairo-run --program out.zock.json --layout=small --print_output --program_input input.json
+# Cairo PIE (compressed format??)
+cairo-run --program out.zock.json --layout=small --cairo_pie_output pie.zip --print_output --program_input input.json
 ```
 
 ## troubleshooting
