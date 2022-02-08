@@ -19,7 +19,7 @@ done
 
 if [ -z "$WATCH_MODE" ]; then
     echo "Installed %pedersen code"
-    rsync -r --ignore-existing --exclude '.*' --exclude '*.sh' --exclude '*.md' hoon/* $PIER/
+    rsync -r --exclude '.*' --exclude '*.sh' --exclude '*.md' hoon/* $PIER/
 else
    echo "Watching for changes to copy to ${PIER}..."
    while [ 0 ]
