@@ -10,27 +10,35 @@
   :: - (jug child parent) : parents who need children to hash
   :: - (map wire/cord * ) : hashes coming back from Python
 ::
-+$  state-0  [%0 counter=@]
++$  state-0  
+  $:  %0
+      cache=(map * hash)
+      deps=(map child parent)
+      reqs=(map wire *)           ::  hashes coming back from localhost/Python
+  ==
 ::
 +$  card  card:agent:gall
 ::
-+$  noun-to-hash
-  $%  [%cell head=@ tail=@]
++$  child  *
++$  parent  *
++$  phash  @                     ::  Pedersen hash
++$  hash-req
+  $%  [%cell head=phash tail=phash]
       [%atom val=@]
   ==
 ::
 ++  req-hash
-  |=  n=noun-to-hash
+  |=  h=hash-req
   ^-  card
   =|  out=outbound-config:iris
   |^
-  [%pass /(scot %da now) %arvo %i %request [%'GET' (mk-url n) out]
+  [%pass /(scot %da now) %arvo %i %request [%'GET' (mk-url h) out]
   ++  mk-noun-url 
     =/  base=tape  "http://localhost:3000/pedersen?"
     %+  weld  base
-      ?-  -.n
-        %atom  "atom={(scow %ud val.n)}"
-        %cell  "head={(scow %ud head.n)}&tail={(scow %ud tail.n)}"
+      ?-  -.h
+        %atom  "atom={(scow %ud val.h)}"
+        %cell  "head={(scow %ud head.h)}&tail={(scow %ud tail.h)}"
       ==
     ==
   --
@@ -62,8 +70,19 @@
   ?>(team:title our.bowl src.bowl) 
   ?.  ?=(%pedersen-hash-noun mark)
     (on-poke:def mark vase)
-  !<(noun vase) 
-  `this
+  =/  n=*  !<(noun vase) 
+  =*  c  cache.state
+  ?:  (~(has by c) n)
+    `this
+  ?@  n
+    :: TODO do iris req
+    `this
+  =/  [head=(unit phash) tail=(unit phash)]
+    [(~(get by c) -:n) (~(get by c) +:n)]
+  ?:  ?&(!=(~ head) !=(~ tail))
+    ::  TODO do iris req for cell
+    `this
+  ::  else do %hash-noun again
 ::
 ++  on-watch  on-watch:def
 ++  on-leave  on-leave:def
