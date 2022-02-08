@@ -50,7 +50,7 @@
   |=  [=mark =vase]
   ^-  (quip card _this)
   ?>  (team:title our.bowl src.bowl) 
-  ?.  ?=(%pedersen-hash-noun mark)
+  ?.  ?=(%noun mark)
     (on-poke:def mark vase)
   =/  n=*  !<(noun vase) 
   ~&  >>  n
@@ -59,11 +59,11 @@
   ?:  (~(has by c) n)
     `this
   ?@  n
-    `this  ::(req-hash [%atom n])
+    (req-hash [%atom n])
   =/  [hhead=(unit phash) htail=(unit phash)]
     [(~(get by c) -.n) (~(get by c) +.n)]
-  ?:  ?&(!=(~ hhead) !=(~ htail))
-    `this  ::(req-hash [%cell hhead htail])
+  ?:  ?&(?=([~ phash] hhead) ?=([~ phash] htail))
+    (req-hash [%cell u.hhead u.htail])
   =^  c1  this  (hash-child -.n hhead)
   =^  c2  this  (hash-child +.n htail)
   [(weld c1 c2) this]
@@ -76,7 +76,7 @@
       `this
     :_  this(deps.state (~(put ju deps.state) child n))
     :~  :*  %pass  /(scot %da now.bowl)  %agent  [our.bowl %pedersen] 
-            %poke  %pedersen-hash-noun  !>(child)
+            %poke  %noun  !>(child)
         ==
     ==
   ::
