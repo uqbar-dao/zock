@@ -3,8 +3,8 @@
 # source ~/cairo_venv/bin/activate
 
 # usage: pass an atom value or head+tail of Pedersen hashes to hash
-#        curl 'http://localhost:3000/pedersen?atom=23i'
-#     OR curl 'http://localhost:3000/pedersen?head=2323424&tail=297324'
+#        curl 'http://localhost:3000/pedersen?atom=23.222'
+#     OR curl 'http://localhost:3000/pedersen?head=2.323.424&tail=297324'
 
 from starkware.crypto.signature.signature import pedersen_hash
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -15,9 +15,9 @@ PORT = 3000
 
 def hash_noun(n):
   if "atom" in n:
-    return pedersen_hash(int(n['atom'][0]), 0)
+    return pedersen_hash(int(n['atom'][0].replace('.', '')), 0)
   elif "head" in n and "tail" in n:
-    return pedersen_hash(int(n['head'][0]), int(n['tail'][0]))
+    return pedersen_hash(int(n['head'][0].replace('.', '')), int(n['tail'][0].replace('.', '')))
   else:
     raise Exception("Error: arg should be atom or head&tail")
 

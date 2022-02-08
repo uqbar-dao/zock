@@ -67,6 +67,7 @@
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
+  |^
   ?>(team:title our.bowl src.bowl) 
   ?.  ?=(%pedersen-hash-noun mark)
     (on-poke:def mark vase)
@@ -75,14 +76,20 @@
   ?:  (~(has by c) n)
     `this
   ?@  n
-    :: TODO do iris req
+    [~[(req-hash [%atom n])] this]
     `this
   =/  [head=(unit phash) tail=(unit phash)]
     [(~(get by c) -:n) (~(get by c) +:n)]
   ?:  ?&(!=(~ head) !=(~ tail))
+    [~[(req-hash [%cell head tail])] this]
     ::  TODO do iris req for cell
     `this
   ::  else do %hash-noun again
+  :_  this
+  ++  blah
+    ^-  (quip card _this)
+    `this
+  --
 ::
 ++  on-watch  on-watch:def
 ++  on-leave  on-leave:def
