@@ -1,5 +1,5 @@
 ::
-/+  dbug, default-agent, p=pedersen
+/+  dbug, default-agent
 |%
 +$  versioned-state
     $%  state-0
@@ -46,57 +46,58 @@
   ~&  >  '%pedersen recompiled successfully'
   `this(state !<(versioned-state old-state))
 ::
-++  on-poke
+++  on-poke 
   |=  [=mark =vase]
   ^-  (quip card _this)
-  ?>(team:title our.bowl src.bowl) 
+  ?>  (team:title our.bowl src.bowl) 
   ?.  ?=(%pedersen-hash-noun mark)
     (on-poke:def mark vase)
   =/  n=*  !<(noun vase) 
+  ~&  >>  n
   =*  c  cache.state
   |^
   ?:  (~(has by c) n)
     `this
   ?@  n
-    (req-hash [%atom n])
+    `this  ::(req-hash [%atom n])
   =/  [hhead=(unit phash) htail=(unit phash)]
     [(~(get by c) -.n) (~(get by c) +.n)]
   ?:  ?&(!=(~ hhead) !=(~ htail))
-    (req-hash [%cell hhead htail])
-  ::  else do %hash-noun again on head/tail
-  ::  update child-parent map
-  ::  [%pass /(scot %da now.bowl) %poke %hash-noun !>(head)]  
+    `this  ::(req-hash [%cell hhead htail])
   =^  c1  this  (hash-child -.n hhead)
   =^  c2  this  (hash-child +.n htail)
   [(weld c1 c2) this]
   ::
+  ::
   ++  hash-child
-    |=  child=*  hn=(unit phash)
+    |=  [child=* hn=(unit phash)]
     ^-  (quip card _this)
-    ?~  hn  `this
-    :_  this(deps.state (~(put ju deps.state) child n)
-    ~[%pass /(scot %da now.bowl) %poke %hash-noun !>(child)]
-  ::  if ~, then do nothing
-  ::  else, pass a %hash-noun card and update deps
+    ?^  hn 
+      `this
+    :_  this(deps.state (~(put ju deps.state) child n))
+    :~  :*  %pass  /(scot %da now.bowl)  %agent  [our.bowl %pedersen] 
+            %poke  %pedersen-hash-noun  !>(child)
+        ==
+    ==
   ::
   ++  req-hash
     |=  h=hash-req
     ^-  (quip card _this)
     =|  out=outbound-config:iris
-    |^
     =/  wir=wire  /(scot %da now.bowl)
-    :_  this(reqs.state (~(put by reqs.state) wir n)
-    ~[%pass wir %arvo %i %request [%'GET' (mk-url h) out]
+    :_  this(reqs.state (~(put by reqs.state) wir n))
+    ~[[%pass wir %arvo %i %request [%'GET' (mk-url h) ~ ~] out]]
   ::
   ++  mk-url 
     |=  h=hash-req
+    ^-  cord
     =/  base=tape  "http://localhost:3000/pedersen?"
+    %-  crip
     %+  weld  base
       ?-  -.h
         %atom  "atom={(scow %ud val.h)}"
         %cell  "head={(scow %ud head.h)}&tail={(scow %ud tail.h)}"
       ==
-    ==
   --
 ::
 ++  on-watch  on-watch:def
