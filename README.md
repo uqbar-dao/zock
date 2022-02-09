@@ -36,7 +36,32 @@ cairo-run --program out.zock.json --layout=small --print_output --program_input 
 cairo-run --program out.zock.json --layout=small --cairo_pie_output pie.zip --print_output --program_input input.json
 ```
 
+### Submit CAIRO Code and Input to SHARed Prover
+
+First,
+```
+cairo-sharp submit --source zock.cairo \
+    --program_input input.json
+```
+Expected output similar to:
+```
+Compiling...
+Running...
+2258442912665439649622769515993460039756024697697714582745734598954638194578
+Submitting to SHARP...
+Job sent.
+Job key: 94601714-9546-4930-8756-ea66deddc885
+Fact: 0x27f52a827c297c3d6036dacf8e715f50a6eadb4035ea2fc83cf081f41a176c1d
+```
+Then use the job key to check status:
+```
+cairo-sharp status 94601714-9546-4930-8756-ea66deddc885
+```
+When ready it will say ```PROCESSED```
+
 ## troubleshooting
+
+Use python3.7
 
 ### handling Cairo negative numbers
 in cairo you only have values in the range [0,p-1], integers in the range [(p-1)/2,p-1] are "treated as" negative. Use `as_int` from `common.math_utils` to handle this.
