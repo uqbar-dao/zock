@@ -1,4 +1,8 @@
 ::
+::  usage
+::  :pedersen &hash-noun !>([1 2 3])
+::  :pedersen &get-hash !>([1 2 3]
+::
 /+  dbug, default-agent
 |%
 +$  versioned-state
@@ -67,11 +71,15 @@
   |=  [=mark =vase]
   ^-  (quip card _this)
   ?>  (team:title our.bowl src.bowl) 
-  ?.  ?=(%noun mark)
+  ?.  ?=(?(%hash-noun %get-hash) mark)  
     (on-poke:def mark vase)
   =/  n=*  !<(noun vase) 
-  ~&  >>  n
   =*  c  cache.state
+  ?:  ?=(%get-hash mark)
+    ~&  >>>  (~(get by c) n)
+    `this  
+  ::  else, %hash-noun
+  ::
   |^
   ?:  (~(has by c) n)
     `this
@@ -93,7 +101,7 @@
       `this
     :_  this(deps.state (~(put ju deps.state) child n))
     :~  :*  %pass  /(scot %uv (cut 5 [0 6] eny.bowl))  %agent  
-            [our.bowl %pedersen]  %poke  %noun  !>(child)
+            [our.bowl %pedersen]  %poke  %hash-noun  !>(child)
         ==
     ==
   ::
@@ -102,7 +110,6 @@
     ^-  (quip card _this)
     =|  out=outbound-config:iris
     =/  wir=wire  /(scot %uv (cut 5 [0 6] eny.bowl))
-    ~&  >>>  wir
     :_  this(reqs.state (~(put by reqs.state) wir n))
     ~[[%pass wir %arvo %i %request [%'GET' (mk-url h) ~ ~] out]]
   ::
@@ -128,7 +135,6 @@
   =/  uf  full-file.client-response.sign-arvo
   ?~  uf  `this
   =/  h=phash  (rash q.data.u.uf dem)
-  ~&  >>  h
   =/  un=(unit *)  (~(get by reqs.state) wire)
   ?~  un  `this
   =*  n  u.un
@@ -155,7 +161,7 @@
     ps  t.ps
     cards
     :*  :*  %pass  /(scot %uv (cut 5 [0 6] eny.bowl))  %agent  
-            [our.bowl %pedersen]  %poke  %noun  !>(i.ps)
+            [our.bowl %pedersen]  %poke  %hash-noun  !>(i.ps)
         ==
         cards
     ==
