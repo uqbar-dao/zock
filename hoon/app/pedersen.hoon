@@ -131,21 +131,39 @@
   ~&  >>  h
   =/  un=(unit *)  (~(get by reqs.state) wire)
   ?~  un  `this
+  =*  n  u.un
   =.  reqs.state  (~(del by reqs.state) wire)
-  =.  cache.state  (~(put by cache.state) u.un h)
-  ::  loop list of parents of child
-  ::  if parent is hashed, done
-  ::  if parent has unhashed child, done
+  =.  cache.state  (~(put by cache.state) n h)
+  =/  ps=(list parent)
+    %~  tap  in
+    (~(gut by deps) n *(set parent))
+  =.  deps.state  (~(del by deps.state) n)
+  =|  cards=(list card)
+  ::  if parent is hashed, skip
+  ::  if parent has unhashed child, skip
   ::  if parent has both hashed children, call hash-noun
-  `this
+  ::
+  |-
+  ?~  ps  [cards this]
+  ?:  (~(has by cache.state) i.ps)
+    $(ps t.ps)
+  =/  other=child
+    ?:(=(n -.i.ps) +.i.ps -.i.ps)
+  ?.  (~(has by cache.state) other)
+    $(ps t.ps)
+  %_  $
+    ps  t.ps
+    cards
+    :*  :*  %pass  /(scot %uv (cut 5 [0 6] eny.bowl))  %agent  
+            [our.bowl %pedersen]  %poke  %noun  !>(i.ps)
+        ==
+        cards
+    ==
+  ==
 ::
 ++  on-watch  on-watch:def
 ++  on-leave  on-leave:def
 ++  on-peek   on-peek:def
 ++  on-agent  on-agent:def
-::  to handle a number coming back from Python
-::  > =j (json [%n '23456'])
-::  > (ni:dejs:format j)
-::
 ++  on-fail   on-fail:def
 --
