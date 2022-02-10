@@ -123,9 +123,20 @@
   ^-  (quip card _this)
   ?.  ?=(%http-response +<.sign-arvo)
     (on-arvo:def wire sign-arvo)
-  ~&  >>  wire
-  ~&  >>  client-response.sign-arvo
-  ::  client-response.sign-arvo 
+  ?.  ?=(%finished -.client-response.sign-arvo)
+    `this
+  =/  uf  full-file.client-response.sign-arvo
+  ?~  uf  `this
+  =/  h=phash  (rash q.data.u.uf dem)
+  ~&  >>  h
+  =/  un=(unit *)  (~(get by reqs.state) wire)
+  ?~  un  `this
+  =.  reqs.state  (~(del by reqs.state) wire)
+  =.  cache.state  (~(put by cache.state) u.un h)
+  ::  loop list of parents of child
+  ::  if parent is hashed, done
+  ::  if parent has unhashed child, done
+  ::  if parent has both hashed children, call hash-noun
   `this
 ::
 ++  on-watch  on-watch:def
