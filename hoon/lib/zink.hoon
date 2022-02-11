@@ -1,6 +1,7 @@
 /-  *zink
 |_  a=(map * phash)
 ::  eval: assumes that a has a full hash cache of nouns used
+::
 ++  eval
   |=  [s=* f=* h=hints m=merks]
   ^-  [res=* merks hints]
@@ -8,7 +9,6 @@
     [(~(got by a) s) (~(got by a) f)]
   |^
   ?+    -.f  !!
-    ::  TODO fig out why not typematching here
       %0
     ?>  ?=(@ +.f)
     =^  parent-root  m
