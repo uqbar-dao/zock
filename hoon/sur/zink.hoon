@@ -8,11 +8,11 @@
   ==
 ::
 +$  hint
-  $%  [%0 axis=@ parent=(unit phash)]     :: parent if axis isn't 1
+  $%  [%0 axis=@ parent-root=(unit phash)]     :: parent if axis isn't 1
       [%1 res=phash]
   ==
 +$  merks  (map phash [phash phash])      :: k is parent, v is head/tail
-+$  sf  (map [* *] hint)                  :: subject/formula -> hint
++$  hints  (map [phash phash] hint)                  :: subject/formula -> hint
 ::
 ++  pre-comp
   %-  ~(gas by *(map * phash))
