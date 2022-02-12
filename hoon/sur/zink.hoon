@@ -12,7 +12,7 @@
       [%1 res=phash]
   ==
 +$  merks  (map phash [phash phash])      :: k is parent, v is head/tail
-+$  hints  (map [phash phash] hint)                  :: subject/formula -> hint
++$  hints  (map phash (map phash hint))   :: subject -> formula -> hint
 ::
 ++  pre-comp
   %-  ~(gas by *(map * phash))

@@ -24,7 +24,11 @@
     ++  put-hint
       |=  hin=hint
       ^-  hints
-      (~(put by h) [sroot froot] hin)
+      =/  inner=(map phash hint)
+        (~(gut by h) sroot *(map phash hint))
+      %+  ~(put by h)
+        sroot
+      (~(put by inner) froot hin)
     ::
     ++  find-axis
       |=  axis=@
@@ -41,6 +45,45 @@
         axis  (div axis 2)
       ==
     --
+  --
+++  enjs
+  |%
+  ++  merks
+    |=  m=^merks
+    ^-  json
+    %-  pairs:enjs:format
+    :~  ['key' s+'hi']
+    ==
+  ::
+  ++  hints
+    |=  h=^hints
+    |^  ^-  json
+    %-  pairs:enjs:format
+    %+  turn  ~(tap by h)
+      |=  [sroot=phash v=(map phash hint)]
+      [(numb sroot) (inner v)
+    ++  inner
+      |=  i=(map phash hint)
+      %+  turn  ~(tap by i)
+        |=  [froot=phash hin=hint]
+        %-  frond:enjs:format
+        [(numb froot) (en-hint hin)]
+    ++  en-hint
+      |=  hin=hint
+      ?-  -.hin
+          %0
+      :: TODO finish
+        [%a ~[n+'0' n+(numb axis.hin) 
+          %1
+        [%a ~[n+'1' n+(numb res.hin)]]
+      ==
+    --
+  ::
+  ++  numb
+    |=  n=@ud
+    %+  skip
+      (scow %ud n)
+    |=(a=@td =(a '.'))
   --
 --
 
