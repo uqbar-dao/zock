@@ -46,10 +46,19 @@
   |=  [=mark =vase]
   ^-  (quip card _this)
   ?>  (team:title our.bowl src.bowl) 
-  ?.  ?=(?(%hash-noun %get-hash) mark)  
+  ?.  ?=(?(%eval %hash-noun %get-hash) mark)  
     (on-poke:def mark vase)
   =/  n=*  !<(noun vase) 
   =*  c  cache.state
+  ::
+  ?:  ?=(%eval mark)
+    ?>  ?=(^ n)
+    =|  mh=[m=merks h=hints]
+    =^  res  mh
+      (~(eval zink cache.state) n m.mh h.mh)
+    ~&  >  [res mh]
+    `this
+  ::
   ?:  ?=(%get-hash mark)
     ~&  >>>  (~(get by c) n)
     `this  
