@@ -59,6 +59,13 @@ cairo-sharp status 94601714-9546-4930-8756-ea66deddc885
 ```
 When ready it will say ```PROCESSED```
 
+### Verify the fact on SHARP
+
+```
+https://eth-goerli.alchemyapi.io/v2/HYoJ9w4vu0iEOru4z0XcceAcedvcXj4a
+```
+(If for some reason you need websockets just replace ```https``` with ```wss```)
+
 ## troubleshooting
 
 Use python3.7
