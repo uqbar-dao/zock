@@ -34,14 +34,17 @@
       |=  axis=@
       ^-  [parent=(unit phash) merks]
       |- 
-      ?:  =(1 axis)  `m
+      ?:  =(1 axis)
+        [~ m]
       =/  [parent=phash hhead=phash htail=phash]
+        ~&  >  s
         [(~(got by a) s) (~(got by a) -.s) (~(got by a) +.s)]
       ?:  (lte axis 3)
         :-  `parent
         (~(put by m) parent [hhead htail])
       %_  $
-        s  ?:(=(0 (mod axis 2)) -.s +.s)
+        :: TODO this is wrong
+        s  ?:(=(0 (mod (div axis 2) 2)) -.s +.s)
         axis  (div axis 2)
       ==
     --
