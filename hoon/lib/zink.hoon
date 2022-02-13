@@ -88,13 +88,13 @@
           %0
         :-  %a
         ^-  (list json)
-        :*  n+'0'  n+(numb axis.hin) 
+        :*  s+'0'  s+(numb axis.hin) 
             ?~  parent.hin  ~ 
             [s+(numb u.parent.hin) ~]
         ==
         ::
           %1
-        [%a ~[n+'1' s+(numb res.hin)]]
+        [%a ~[s+'1' s+(numb res.hin)]]
       ==
     --
   ::
