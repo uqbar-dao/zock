@@ -132,31 +132,38 @@
     ++  en-hint
       |=  hin=hint
       ^-  json
-      ?+  -.hin  !!
+      :-  %a
+      ^-  (list json)
+      ?-  -.hin
           %0
-        :-  %a
-        ^-  (list json)
         :*  s+'0'  s+(num axis.hin) 
-            ?~  parent.hin  ~ 
+            ?~  parent.hin  ~
             [s+(num u.parent.hin) ~]
         ==
         ::
           %1
-        [%a ~[s+'1' s+(num res.hin)]]
+        ~[s+'1' s+(num res.hin)]
         ::
-          ::%2
-        ::[%a ~[s+'2' s+'TODO']]
+          %2
+        ~[s+'2' s+(num subf1.hin) s+(num subf2.hin)]
         ::
-          :: %3
-        :: [%a ~[s+'3' s+(num subf.hin)  
+          %3
+        :*  s+'3'  s+(num subf.hin) 
+            ?-  -.subf-res.hin
+                %atom
+              [s+(num +.subf-res.hin) s+'0' ~]
+                %cell
+              [s+'0' s+(num +.subf-res.hin) ~]
+            ==
+        ==
         ::
           %4
-        :-  %a
         ~[s+'4' s+(num subf.hin) s+(num subf-res.hin)]
         ::
+          %5
+        ~[s+'5' s+(num subf1.hin) s+(num subf2.hin)]
         ::
           %cell
-        :-  %a
         ~[s+'cell' s+(num subf1.hin) s+(num subf2.hin)]
       ==
     --
