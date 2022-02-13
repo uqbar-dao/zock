@@ -27,9 +27,7 @@
       ::
         %0
       ?>  ?=(@ +.f)
-      =^  parent  m.mh
-        (find-axis +.f)
-      [.*(s f) m.mh (put-hint [%0 +.f parent])]
+      [.*(s f) (walk-axis +.f) (put-hint [%0 +.f])] 
       ::
         %1
       [+.f m.mh (put-hint [%1 (~(got by a) +.f)])]
@@ -80,16 +78,15 @@
         sroot
       (~(put by inner) froot hin)
     ::
-    ++  find-axis
+    ++  walk-axis
       |=  axis=@
-      ^-  [parent=(unit phash) merks]
+      ^-  merks
       |- 
       ?:  =(1 axis)
-        [~ m.mh]
+        m.mh       
       =/  [parent=phash hhead=phash htail=phash]
         [(~(got by a) s) (~(got by a) -.s) (~(got by a) +.s)]
       ?:  (lte axis 3)
-        :-  `parent
         (~(put by m.mh) parent [hhead htail])
       %_  $
         s  ?:(=(0 (mod (div axis 2) 2)) -.s +.s)
@@ -136,10 +133,7 @@
       ^-  (list json)
       ?-  -.hin
           %0
-        :*  s+'0'  s+(num axis.hin) 
-            ?~  parent.hin  ~
-            [s+(num u.parent.hin) ~]
-        ==
+        ~[s+'0' s+(num axis.hin)]
         ::
           %1
         ~[s+'1' s+(num res.hin)]
