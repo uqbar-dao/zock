@@ -12,10 +12,10 @@
     |^
     ?+    -.f  !!
         %0
-    ?>  ?=(@ +.f)
-      =^  parent-root  m
+      ?>  ?=(@ +.f)
+      =^  parent  m
         (find-axis +.f)
-    [.*(s f) m (put-hint [%0 +.f parent-root])]
+      [.*(s f) m (put-hint [%0 +.f parent])]
       ::
         %1
     [+.f m (put-hint [%1 (~(got by a) +.f)])]
@@ -32,14 +32,14 @@
     ::
     ++  find-axis
       |=  axis=@
-      ^-  [parent-root=(unit phash) merks]
+      ^-  [parent=(unit phash) merks]
       |- 
       ?:  =(1 axis)  `m
-      =/  [parent-root=phash hhead=phash htail=phash]
+      =/  [parent=phash hhead=phash htail=phash]
         [(~(got by a) s) (~(got by a) -.s) (~(got by a) +.s)]
       ?:  (lte axis 3)
-        :-  `parent-root
-        (~(put by m) parent-root [hhead htail])
+        :-  `parent
+        (~(put by m) parent [hhead htail])
       %_  $
         s  ?:(=(0 (mod axis 2)) -.s +.s)
         axis  (div axis 2)
@@ -48,12 +48,21 @@
   --
 ++  enjs
   |%
+  ++  all
+    |=  [m=^merks h=^hints]
+    ^-  json
+    %-  pairs:enjs:format
+    :~  ['merks' (merks m)]
+        ['hints' (hints h)]
+    ==
   ++  merks
     |=  m=^merks
     ^-  json
     %-  pairs:enjs:format
-    :~  ['key' s+'hi']
-    ==
+    %+  turn  ~(tap by m)
+      |=  [parent=phash hhead=phash htail=phash]
+      :-  (numb parent)
+      [%a ~[s+(numb hhead) s+(numb htail)]]
   ::
   ++  hints
     |=  h=^hints
@@ -61,29 +70,34 @@
     %-  pairs:enjs:format
     %+  turn  ~(tap by h)
       |=  [sroot=phash v=(map phash hint)]
-      [(numb sroot) (inner v)
+      [(numb sroot) (inner v)]
     ++  inner
       |=  i=(map phash hint)
+      ^-  json
+      %-  pairs:enjs:format
       %+  turn  ~(tap by i)
         |=  [froot=phash hin=hint]
-        %-  frond:enjs:format
         [(numb froot) (en-hint hin)]
     ++  en-hint
       |=  hin=hint
+      ^-  json
       ?-  -.hin
           %0
-      :: TODO finish
-        [%a ~[n+'0' n+(numb axis.hin) 
+        :-  %a
+        ^-  (list json)
+        :*  n+'0'  n+(numb axis.hin) 
+            ?~  parent.hin  ~ 
+            [s+(numb u.parent.hin) ~]
+        ==
+        ::
           %1
-        [%a ~[n+'1' n+(numb res.hin)]]
+        [%a ~[n+'1' s+(numb res.hin)]]
       ==
     --
   ::
   ++  numb
     |=  n=@ud
-    %+  skip
-      (scow %ud n)
-    |=(a=@td =(a '.'))
+    `cord`(rsh [3 2] (scot %ui n))
   --
 --
 

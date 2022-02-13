@@ -56,7 +56,7 @@
     =|  mh=[m=merks h=hints]
     =^  res  mh
       (~(eval zink cache.state) n m.mh h.mh)
-    ~&  >  [res mh]
+    ~&  >  (crip (en-json:html (all:enjs mh)))
     `this
   ::
   ?:  ?=(%get-hash mark)
