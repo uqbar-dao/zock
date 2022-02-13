@@ -10,6 +10,11 @@
 +$  hint
   $%  [%0 axis=@ parent=(unit phash)]     :: parent if axis isn't 1
       [%1 res=phash]
+      [%2 subf1=phash subf2=phash]
+      [%3 subf=phash subf-res=$%([%atom @] [%cell phash])]
+      [%4 subf=phash subf-res=@]
+      [%5 subf1=phash subf2=phash]
+      [%cell subf1=phash subf2=phash]
   ==
 +$  merks  (map phash [phash phash])      :: k is parent, v is head/tail
 +$  hints  (map phash (map phash hint))   :: subject -> formula -> hint
