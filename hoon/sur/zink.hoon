@@ -8,12 +8,13 @@
   ==
 ::
 +$  hint
-  $%  [%0 axis=@ parent=(unit phash)]     :: parent if axis isn't 1
+  $%  [%0 axis=@] 
       [%1 res=phash]
       [%2 subf1=phash subf2=phash]
       ::  encodes to 
       ::   [3 subf-hash atom 0] if atom
       ::   [3 subf-hash 0 cell-hash] if cell
+      ::
       [%3 subf=phash subf-res=$%([%atom @] [%cell phash])]
       [%4 subf=phash subf-res=@]
       [%5 subf1=phash subf2=phash]
