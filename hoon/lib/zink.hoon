@@ -47,8 +47,10 @@
         (eval [s +.f] mh)
       =*  hsubf  (~(got by a) +.f)
       ?@  res     ::  1 for false
-        [1 m.mh (put-hint [%3 hsubf [%atom res]])]
-      [0 m.mh (put-hint [%3 hsubf [%cell (~(got by a) res)]])]
+        [1 m.mh (put-hint [%3 hsubf %atom res])]
+      =/  [hhash=phash thash=phash]
+        [(~(got by a) -.res) (~(got by a) +.res)] 
+      [0 m.mh (put-hint [%3 hsubf %cell hhash thash])]
       ::
         %4
       =^  res  mh
@@ -142,12 +144,17 @@
         ~[s+'2' s+(num subf1.hin) s+(num subf2.hin)]
         ::
           %3
+        ::  if atom, head and tail are 0
+        ::  
         :*  s+'3'  s+(num subf.hin) 
             ?-  -.subf-res.hin
                 %atom
-              [s+(num +.subf-res.hin) s+'0' ~]
+              ~[s+(num +.subf-res.hin) s+'0' s+'0']
                 %cell
-              [s+'0' s+(num +.subf-res.hin) ~]
+              :~  s+'0'
+                  s+(num head.subf-res.hin)
+                  s+(num tail.subf-res.hin)
+              ==
             ==
         ==
         ::

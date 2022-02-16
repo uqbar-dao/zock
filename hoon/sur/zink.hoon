@@ -13,9 +13,15 @@
       [%2 subf1=phash subf2=phash]
       ::  encodes to 
       ::   [3 subf-hash atom 0] if atom
-      ::   [3 subf-hash 0 cell-hash] if cell
+      ::   [3 subf-hash 0 cell-hash cell-hash] if cell
       ::
-      [%3 subf=phash subf-res=$%([%atom @] [%cell phash])]
+      $:  %3 
+          subf=phash 
+          $=  subf-res
+          $%  [%atom @]
+              [%cell head=phash tail=phash]
+          ==
+      ==
       [%4 subf=phash subf-res=@]
       [%5 subf1=phash subf2=phash]
       [%cell subf1=phash subf2=phash]
