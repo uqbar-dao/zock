@@ -5,8 +5,8 @@
   ::  eval: assumes that a has a full hash cache of nouns used
   ::
   ++  eval
-    |=  [[s=* f=*] mh=[m=merks h=hints]]
-    ^-  [res=* merks hints]
+    |=  [[s=* f=*] h=hints]
+    ^-  [res=* hints]
     =/  [sroot=phash froot=phash]
       [(~(got by a) s) (~(got by a) f)]
     |^
@@ -17,105 +17,94 @@
       =/  [subf1=* subf2=*]  [-.f +.f]
       =/  [hsubf1=phash hsubf2=phash] 
         [(~(got by a) subf1) (~(got by a) subf2)]
-      =^  res-head  mh
-        (eval [s subf1] mh)
-      =^  res-tail  mh
-        (eval [s subf2] mh)
-      :*  [res-head res-tail]  m.mh
+      =^  res-head  h
+        (eval [s subf1] h)
+      =^  res-tail  h
+        (eval [s subf2] h)
+      :-  [res-head res-tail] 
           (put-hint [%cons hsubf1 hsubf2])
-      ==
       ::
         %0
       ?>  ?=(@ +.f)
-      [.*(s f) (walk-axis +.f) (put-hint [%0 +.f])] 
+      :-  .*(s f) 
+      (put-hint [%0 +.f (merk-sibs +.f)])
       ::
         %1
-      [+.f m.mh (put-hint [%1 (~(got by a) +.f)])]
+      [+.f (put-hint [%1 (~(got by a) +.f)])]
       ::
         %2
       =/  [subf1=* subf2=*]  [+<.f +>.f]
       =/  [hsubf1=phash hsubf2=phash] 
         [(~(got by a) subf1) (~(got by a) subf2)]
-      =^  res1  mh
-        (eval [s subf1] mh)
-      =^  res2  mh
-        (eval [s subf2] mh)
-      [.*(res1 res2) m.mh (put-hint [%2 hsubf1 hsubf2])]
+      =^  res1  h
+        (eval [s subf1] h)
+      =^  res2  h
+        (eval [s subf2] h)
+      [.*(res1 res2) (put-hint [%2 hsubf1 hsubf2])]
       ::
         %3
-      =^  res  mh
-        (eval [s +.f] mh)
+      =^  res  h
+        (eval [s +.f] h)
       =*  hsubf  (~(got by a) +.f)
       ?@  res     ::  1 for false
-        [1 m.mh (put-hint [%3 hsubf %atom res])]
+        [1 (put-hint [%3 hsubf %atom res])]
       =/  [hhash=phash thash=phash]
         [(~(got by a) -.res) (~(got by a) +.res)] 
-      [0 m.mh (put-hint [%3 hsubf %cell hhash thash])]
+      [0 (put-hint [%3 hsubf %cell hhash thash])]
       ::
         %4
-      =^  res  mh
-        (eval [s +.f] mh)
+      =^  res  h
+        (eval [s +.f] h)
       ~&  >>>  res
       =*  hsubf  (~(got by a) +.f)
       ?>  ?=(@ res)
-      [res m.mh (put-hint [%4 hsubf res])]
+      [res (put-hint [%4 hsubf res])]
       ::
         %5
       =/  [subf1=* subf2=*]  [+<.f +>.f]
       =/  [hsubf1=phash hsubf2=phash] 
         [(~(got by a) subf1) (~(got by a) subf2)]
-      =^  res1  mh
-        (eval [s subf1] m.mh h.mh)
-      =^  res2  mh
-        (eval [s subf2] m.mh h.mh)
-      [=(res1 res2) m.mh (put-hint [%5 hsubf1 hsubf2])]
+      =^  res1  h
+        (eval [s subf1] h)
+      =^  res2  h
+        (eval [s subf2] h)
+      [=(res1 res2) (put-hint [%5 hsubf1 hsubf2])]
     ==
     ::
     ++  put-hint
       |=  hin=hint
       ^-  hints
       =/  inner=(map phash hint)
-        (~(gut by h.mh) sroot *(map phash hint))
-      %+  ~(put by h.mh)
+        (~(gut by h) sroot *(map phash hint))
+      %+  ~(put by h)
         sroot
       (~(put by inner) froot hin)
+    ::  +merk-sibs from bottom to top
     ::
-    ++  walk-axis
+    ++  merk-sibs
       |=  axis=@
-      ^-  merks
-      |- 
+      =|  path=(list phash)
+      |-  ^-  (list phash)
       ?:  =(1 axis)
-        m.mh       
-      ?@  s
-        !!
-      =/  [parent=phash hhead=phash htail=phash]
-        [(~(got by a) s) (~(got by a) -.s) (~(got by a) +.s)]
+        path
+      ?~  axis  !!
+      ?@  s  !!
       =/  pick  (cap axis)
-      ?:  (lte axis 3)
-        (~(put by m.mh) parent [hhead htail])
-      %=  $
+      =/  sibling=phash
+        %-  ~(got by a)
+        ?-(pick %2 -.s, %3 +.s)
+      %=  $  
         axis  (mas axis)
-        s  ?-(pick %2 -.s, %3 +.s)
+        path  [sibling path]
       ==
     --
   --
 ++  enjs
   |%
   ++  all
-    |=  [m=^merks h=^hints]
+    |=  h=^hints
     ^-  json
-    %-  pairs:enjs:format
-    :~  ['merks' (merks m)]
-        ['hints' (hints h)]
-    ==
-  ++  merks
-    |=  m=^merks
-    ^-  json
-    %-  pairs:enjs:format
-    %+  turn  ~(tap by m)
-      |=  [parent=phash hhead=phash htail=phash]
-      :-  (num parent)
-      [%a ~[s+(num hhead) s+(num htail)]]
+    (hints h)
   ::
   ++  hints
     |=  h=^hints
@@ -138,7 +127,10 @@
       ^-  (list json)
       ?-  -.hin
           %0
-        ~[s+'0' s+(num axis.hin)]
+        :~  s+'0'  
+            s+(num axis.hin)
+            a+(turn path.hin |=(p=phash s+(num p)))
+        ==
         ::
           %1
         ~[s+'1' s+(num res.hin)]

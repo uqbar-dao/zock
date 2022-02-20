@@ -8,7 +8,7 @@
   ==
 ::
 +$  hint
-  $%  [%0 axis=@] 
+  $%  [%0 axis=@ path=(list phash)]
       [%1 res=phash]
       [%2 subf1=phash subf2=phash]
       ::  encodes to 
@@ -27,7 +27,6 @@
       [%cons subf1=phash subf2=phash]
       ::  [%jet core-hash
   ==
-+$  merks  (map phash [phash phash])      :: k is parent, v is head/tail
 +$  hints  (map phash (map phash hint))   :: subject -> formula -> hint
 ::
 ++  pre-comp
