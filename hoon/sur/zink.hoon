@@ -24,7 +24,7 @@
       ==
       [%4 subf=phash subf-res=@]
       [%5 subf1=phash subf2=phash]
-      [%cell subf1=phash subf2=phash]
+      [%cons subf1=phash subf2=phash]
       ::  [%jet core-hash
   ==
 +$  merks  (map phash [phash phash])      :: k is parent, v is head/tail
