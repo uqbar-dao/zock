@@ -22,7 +22,7 @@
       =^  res-tail  mh
         (eval [s subf2] mh)
       :*  [res-head res-tail]  m.mh
-          (put-hint [%cell hsubf1 hsubf2])
+          (put-hint [%cons hsubf1 hsubf2])
       ==
       ::
         %0
@@ -86,13 +86,16 @@
       |- 
       ?:  =(1 axis)
         m.mh       
+      ?@  s
+        !!
       =/  [parent=phash hhead=phash htail=phash]
         [(~(got by a) s) (~(got by a) -.s) (~(got by a) +.s)]
+      =/  pick  (cap axis)
       ?:  (lte axis 3)
         (~(put by m.mh) parent [hhead htail])
-      %_  $
-        s  ?:(=(0 (mod (div axis 2) 2)) -.s +.s)
-        axis  (div axis 2)
+      %=  $
+        axis  (mas axis)
+        s  ?-(pick %2 -.s, %3 +.s)
       ==
     --
   --
@@ -164,8 +167,8 @@
           %5
         ~[s+'5' s+(num subf1.hin) s+(num subf2.hin)]
         ::
-          %cell
-        ~[s+'cell' s+(num subf1.hin) s+(num subf2.hin)]
+          %cons
+        ~[s+'cons' s+(num subf1.hin) s+(num subf2.hin)]
       ==
     --
   ::
