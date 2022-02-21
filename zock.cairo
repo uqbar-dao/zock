@@ -146,6 +146,29 @@ func five{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   return(h1)
 end
 
+func six(hash_ptr : HashBuiltin*}(s, f, sf1, sf2, sf3) -> (res):
+  alloc_locals
+
+  let (h_sf2_sf3) = hash2(x=sf2, y=sf3)
+  let (h_sf1_sf2_sf3) = hash(x=sf1, y=h_sf2_sf3)
+  let (h_f) = hash2(x=h6, y=h_sf1_sf2_sf3)
+  assert f = h_f
+
+  let (rsf1) = verify(s, sf1)
+
+  if rsf1 == h0:
+    let (result) = verify(s, sf2)
+    return (result)
+  end
+
+  if rsf1 == h1:
+    let (result) = verify(s, sf3)
+    return (result)
+  end
+
+  assert 0 = 1     # crash
+end
+
 func verify{hash_ptr : HashBuiltin*}(s, f) -> (res):
   # lookup (s, f); make a Nock struct
   # jump based on value of the opcode in struct

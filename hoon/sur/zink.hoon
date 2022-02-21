@@ -24,6 +24,7 @@
       ==
       [%4 subf=phash subf-res=@]
       [%5 subf1=phash subf2=phash]
+      [%6 subf1=phash subf2=phash subf3=phash]
       [%cons subf1=phash subf2=phash]
       ::  [%jet core-hash
   ==
