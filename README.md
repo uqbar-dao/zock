@@ -62,9 +62,9 @@ When ready it will say ```PROCESSED```
 ### Verify the fact on SHARP 
 
 ```
-https://eth-goerli.alchemyapi.io/v2/HYoJ9w4vu0iEOru4z0XcceAcedvcXj4a
+cairo-sharp is_verified --node_url https://eth-goerli.alchemyapi.io/v2/HYoJ9w4vu0iEOru4z0XcceAcedvcXj4a 0x27f52a827c297c3d6036dacf8e715f50a6eadb4035ea2fc83cf081f41a176c1d
 ```
-(not used successfully yet)
+Ignore the example format in the CAIRO documentation: ```node_url``` apparently needs to come  before ```fact``` (as of 2022.02.21)
 
 ## troubleshooting
 
