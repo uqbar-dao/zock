@@ -28,8 +28,6 @@ Run in Nock 9.  Same algorithm is used for preprocessing and proving.
 
 - check that tail formula is Nock 10 
 - check that tail formula of the Nock 10 produces a jetted core
-  * first replace axis 6 with value 0?
-  * requires head hash, axis 7 hash, 2 hashing operations
 - check that 10 is editing axis 6
 - sub-res = recursively run the subformula in 6
 - check sub-res structure is appropriate as input for this jet (is this necessary)?
@@ -57,12 +55,16 @@ This works fine for our matching algorithm. `[0 2]` of the Nock 10 matches the `
 ## Doors
 Doors are trickier, because arms in a door are jetted, but the door sample is already replaced, so it's harder to match a hash.
 
-We need to "knock out" the sample of the door and replace with a default. We *could* do this for everything, as long as we are sure that that is valid for all our gates (I think that's the case).
+The door sample is in axis 30, for all the doors we'd be jetting.  The trick is detecting this during the preprocessing phase. 
+
+A *brute-force* option is to extend the jet matching algorithm. Run the normal gate one, and if the jetted-core lookup fails, replace axis `30` with `0` and check again. Also requires fetching the sample in axis 30 and passing it as the door sample to the jet. 
 
 ### Examples
 ```
 > =m (~(put by *(map @t @)) 'tim' 21)
+[[7.170.420 21] 0 0]
 > =m2 (~(put by m) 'tg' 93)
+[[26.484 93] 0 [7.170.420 21] 0 0]
 
 ::  instruction to create the put gate, arm 340 in the by core
 ::    
@@ -73,4 +75,13 @@ We need to "knock out" the sample of the door and replace with a default. We *co
 
 > !=((~(put by m) 't' 22))
 [8 [8 [9 89.596 0 1.023] 9 340 10 [6 0 12] 0 2] 9 2 10 [6 [7 [0 3] 1 116] 7 [0 3] 1 22] 0 2]
+
+> =put-nock1 .*(. !=(~(put by m)))
+> =put-nock2 .*(. !=(~(put by m2)))
+
+:: door sample is in axis 30
+> +30:put-nock1
+[[7.170.420 21] 0 0]
+> +30:put-nock2
+[[26.484 93] 0 [7.170.420 21] 0 0]
 ```
