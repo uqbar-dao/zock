@@ -14,6 +14,12 @@ const h2 = 163736837186402635524512231644610657687461100740724501665235531695018
 const h3 = 936823097115478672163131070534991867793647843312823827742596382032679996195
 const h4 = 469486474782544164430568959439120883383782181399389907385047779197726806430
 const h5 = 2941083907689010536497253969578701440794094793277200004061830176674600429738
+const h6 = 2741690337285522037147443857948052150995543108052651970979313688522374979162
+const h7 = 2258442912665439649622769515993460039756024697697714582745734598954638194578
+const h8 = 2743794648056839147566190792738700325779538550063233531691573479295033948774
+const h9 = 3149011590233272225803080114059308917528748800879621812239443987136907759492
+const h10 = 2466881358002133364822637278001945633159199669109451817445969730922553850042
+const h11 = 1602195742608144856779311879863141684990052756940086705696922586637104021594
 
 # root: merkle root
 # leaf: hashed value or root of subtree
@@ -146,11 +152,11 @@ func five{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   return(h1)
 end
 
-func six(hash_ptr : HashBuiltin*}(s, f, sf1, sf2, sf3) -> (res):
+func six{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, sf3) -> (res):
   alloc_locals
 
   let (h_sf2_sf3) = hash2(x=sf2, y=sf3)
-  let (h_sf1_sf2_sf3) = hash(x=sf1, y=h_sf2_sf3)
+  let (h_sf1_sf2_sf3) = hash2(x=sf1, y=h_sf2_sf3)
   let (h_f) = hash2(x=h6, y=h_sf1_sf2_sf3)
   assert f = h_f
 
@@ -167,6 +173,62 @@ func six(hash_ptr : HashBuiltin*}(s, f, sf1, sf2, sf3) -> (res):
   end
 
   assert 0 = 1     # crash
+  return (0)       # should never get here
+end
+
+func seven{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
+  alloc_locals
+
+  let (h_sf1_sf2) = hash2(x=sf1, y=sf2)
+  let (h_f) = hash2(x=h7, y=h_sf1_sf2)
+  assert f = h_f
+
+  let (rsf1) = verify(s, sf1)
+  let (result) = verify(rsf1, sf2)
+  return (result)
+end
+
+func eight{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
+  alloc_locals
+
+  let (h_sf1_sf2) = hash2(x=sf1, y=sf2)
+  let (h_f) = hash2(x=h8, y=h_sf1_sf2)
+  assert f = h_f
+  
+  let (rsf1) = verify(s, sf1)
+  let s2 = hash2(rsf1, s) # new subject 
+  let (rsf2) = verify(s2.result, sf2)
+  return (rsf2)
+end
+
+func nine{hash_ptr : HashBuiltin*}(s, f, axis, subf, leaf) -> (res):
+  alloc_locals
+
+  let (h_axis_subf) = hash2(x=axis, y=subf)
+  let (h_f) = hash2(x=h9, y=h_axis_subf)
+  assert f = h_f
+
+  let (rsubf) = verify(s, subf)
+
+  let (root) = root_from_axis(rsubf, leaf, axis) 
+  assert root = rsubf
+  let (result) = verify(rsubf, leaf)
+  return (result)
+end
+
+func ten{hash_ptr : HashBuiltin*}(s, f, axis, subf1, subf2) -> (res):
+  alloc_locals
+
+  let (h_subf1_subf2) = hash2(subf1, subf2)
+  let (h_axis_subf1_subf2) = hash2(axis, h_subf1_subf2)
+  let (h_f) = hash2(h10, h_axis_subf1_subf2)
+  assert f = h_f
+
+  let (rsf1) = verify(s, subf1)
+  let (rsf2) = verify(s, subf2)
+
+  # ???????
+
 end
 
 func verify{hash_ptr : HashBuiltin*}(s, f) -> (res):

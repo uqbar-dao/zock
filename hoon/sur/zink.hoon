@@ -25,6 +25,10 @@
       [%4 subf=phash subf-res=@]
       [%5 subf1=phash subf2=phash]
       [%6 subf1=phash subf2=phash subf3=phash]
+      [%7 subf1=phash subf2=phash]
+      [%8 subf1=phash subf2=phash]
+      [%9 axis=@ subf1=phash]
+      [%10 axis=@ subf1=phash subf2=phash]
       [%cons subf1=phash subf2=phash]
       ::  [%jet core-hash
   ==
