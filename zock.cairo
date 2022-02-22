@@ -227,8 +227,8 @@ func ten{hash_ptr : HashBuiltin*}(s, f, axis, subf1, subf2) -> (res):
   let (rsf1) = verify(s, subf1)
   let (rsf2) = verify(s, subf2)
 
-  # ???????
-
+  let (root) = root_from_axis(rsf2, rsf1, axis) 
+  return (root)
 end
 
 func verify{hash_ptr : HashBuiltin*}(s, f) -> (res):
