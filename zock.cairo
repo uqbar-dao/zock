@@ -115,6 +115,15 @@ func three{hash_ptr : HashBuiltin*}(s, f, sf, atom, head, tail) -> (res):
     return(h1)
   end
 
+  # An attacker could have an atom and trick us into thinking it's a cell. 
+  # An atom's hash is h(@)=h(@, 0) and a cell's is h([a, b])=h(h(a), h(b))
+  # So atom A could be passed in as head=h(A), tail=0 and would hash as a cell.
+  # To prevent this we don't allow 0 as the hash of a head or a tail.
+  if tail == 0:
+    assert 0 = 1    # crash 
+    return (0)      # never get here
+  end
+
   # cell
   let (res) = verify(s, sf)
   let (h_ht) = hash2(x=head, y=tail)
@@ -196,7 +205,7 @@ func eight{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   assert f = h_f
   
   let (rsf1) = verify(s, sf1)
-  let s2 = hash2(rsf1, s) # new subject 
+  let s2 = hash2(rsf1, s)     # new subject 
   let (rsf2) = verify(s2.result, sf2)
   return (rsf2)
 end
