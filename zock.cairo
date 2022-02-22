@@ -231,6 +231,16 @@ func ten{hash_ptr : HashBuiltin*}(s, f, axis, subf1, subf2) -> (res):
   return (root)
 end
 
+func eleven{hash_ptr : HashBuiltin*}(s, f, subf) -> (res):
+  alloc_locals
+
+  let (h_f) = hash2(h11, subf)
+  assert f = h_f
+
+  let (res) = verify(s, subf)
+  return (res)
+end
+
 func verify{hash_ptr : HashBuiltin*}(s, f) -> (res):
   # lookup (s, f); make a Nock struct
   # jump based on value of the opcode in struct
