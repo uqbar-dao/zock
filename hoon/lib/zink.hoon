@@ -10,6 +10,8 @@
     =/  [sroot=phash froot=phash]
       [(~(got by a) s) (~(got by a) f)]
     |^
+    ~&  >  s
+    ~&  >  f
     ?+    -.f  !!
       ::  formula is a cell; do distribution
       ::
@@ -55,10 +57,9 @@
         %4
       =^  res  h
         (eval [s +.f] h)
-      ~&  >>>  res
       =*  hsubf  (~(got by a) +.f)
       ?>  ?=(@ res)
-      [res (put-hint [%4 hsubf res])]
+      [(add 1 res) (put-hint [%4 hsubf res])]
       ::
         %5
       =/  [subf1=* subf2=*]  [+<.f +>.f]
@@ -69,6 +70,66 @@
       =^  res2  h
         (eval [s subf2] h)
       [=(res1 res2) (put-hint [%5 hsubf1 hsubf2])]
+        %6
+      =/  [subf1=* subf2=* subf3=*]  [+<.f +>-.f +>+.f]
+      =/  [hsubf1=phash hsubf2=phash hsubf3=phash]
+        :*  (~(got by a) subf1)
+            (~(got by a) subf2)
+            (~(got by a) subf3)
+        ==
+      =^  res1  h
+        (eval [s subf1] h)
+      ?>  ?|(=(0 res1) =(1 res1))
+      =^  res2  h
+        ?:  =(0 res1)
+          (eval [s subf2] h)
+          (eval [s subf3] h)
+      [res2 (put-hint [%6 hsubf1 hsubf2 hsubf3])]
+        %7
+      =/  [subf1=* subf2=*]  [+<.f +>.f]
+      =/  [hsubf1=phash hsubf2=phash]
+        [(~(got by a) subf1) (~(got by a) subf2)]
+      =^  res1  h
+        (eval [s subf1] h)
+      =^  res2  h
+        (eval [res1 subf2] h)
+      [res2 (put-hint [%7 hsubf1 hsubf2])]
+        %8
+      =/  [subf1=* subf2=*]  [+<.f +>.f]
+      =/  [hsubf1=phash hsubf2=phash]
+        [(~(got by a) subf1) (~(got by a) subf2)]
+      =^  res1  h
+        (eval [s subf1] h)
+      =^  res2  h
+        (eval [[res1 s] subf2] h)
+      [res2 (put-hint [%8 hsubf1 hsubf2])]
+        %9
+      =/  [axis=* subf1=*]  [+<.f +>.f]
+      ?>  ?=(@ axis)
+      =/  hsubf1=phash  (~(got by a) subf1)
+      =^  res1  h
+        (eval [s subf1] h)
+      =/  f2  .*(res1 [0 axis])
+      =^  res2  h
+        (eval [res1 f2] h)
+      [res2 (put-hint %9 axis hsubf1)]
+        %10
+      =/  [axis=* subf1=* subf2=*]  [+<-.f +<+.f +>.f]
+      ?>  ?=(@ axis)
+      =/  [hsubf1=phash hsubf2=phash]
+        [(~(got by a) subf1) (~(got by a) subf2)]
+      =^  res1  h
+        (eval [s subf1] h)
+      =^  res2  h
+        (eval [s subf2] h)
+      =/  res  .*(s f)
+      [res (put-hint %10 axis hsubf1 hsubf2)]
+        %11
+      =/  subf1=*  +>.f
+      =/  hsubf1=phash  (~(got by a) subf1)
+      =^  res  h
+        (eval [s subf1] h)
+      [res (put-hint %11 hsubf1)]  :: i think we can just skip the hint
     ==
     ::
     ++  put-hint
@@ -158,6 +219,24 @@
         ::
           %5
         ~[s+'5' s+(num subf1.hin) s+(num subf2.hin)]
+        ::
+          %6
+        ~[s+'6' s+(num subf1.hin) s+(num subf2.hin) s+(num subf3.hin)]
+        ::
+          %7
+        ~[s+'7' s+(num subf1.hin) s+(num subf2.hin)]
+        ::
+          %8
+        ~[s+'8' s+(num subf1.hin) s+(num subf2.hin)]
+        ::
+          %9
+        ~[s+'9' s+(num axis.hin) s+(num subf1.hin)]
+        ::
+          %10
+        ~[s+'10' s+(num axis.hin) s+(num subf1.hin) s+(num subf2.hin)]
+        ::
+          %11
+        ~[s+'11' s+(num subf.hin)]
         ::
           %cons
         ~[s+'cons' s+(num subf1.hin) s+(num subf2.hin)]

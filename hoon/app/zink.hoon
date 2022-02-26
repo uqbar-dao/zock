@@ -56,11 +56,12 @@
     =|  h=hints
     =^  res  h
       (~(eval zink cache.state) n h)
+    ~&  >  res
     ~&  >  (crip (en-json:html (all:enjs h)))
     `this
   ::
   ?:  ?=(%get-hash mark)
-    ~&  >>>  (~(get by c) n)
+    ~&  >>>  `cord`(rsh [3 2] (scot %ui (~(got by c) n)))
     `this  
   ::  else, %hash-noun
   ::

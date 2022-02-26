@@ -138,9 +138,9 @@ func four{hash_ptr : HashBuiltin*}(s, f, sf, atom) -> (res):
   assert f = h
 
   let (res) = verify(s, sf)
-  let (h_a_dec) = hash2(x=atom - 1, y=0)
+  let (h_a_dec) = hash2(x=atom, y=0)
   assert h_a_dec = res
-  let (h_a) = hash2(x=atom, y=0)
+  let (h_a) = hash2(x=atom + 1, y=0)
   return(h_a)
 end
 
