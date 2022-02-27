@@ -27,8 +27,8 @@
       [%6 subf1=phash subf2=phash subf3=phash]
       [%7 subf1=phash subf2=phash]
       [%8 subf1=phash subf2=phash]
-      [%9 axis=@ subf1=phash]
-      [%10 axis=@ subf1=phash subf2=phash]
+      [%9 axis=@ subf1=phash path=(list phash)]
+      [%10 axis=@ subf1=phash subf2=phash path=(list phash)]
       [%11 subf=phash]
       [%cons subf1=phash subf2=phash]
       ::  [%jet core-hash

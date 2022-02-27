@@ -29,7 +29,7 @@
         %0
       ?>  ?=(@ +.f)
       :-  .*(s f) 
-      (put-hint [%0 +.f (merk-sibs +.f)])
+      (put-hint [%0 +.f (merk-sibs s +.f)])
       ::
         %1
       [+.f (put-hint [%1 (~(got by a) +.f)])]
@@ -70,6 +70,7 @@
       =^  res2  h
         (eval [s subf2] h)
       [=(res1 res2) (put-hint [%5 hsubf1 hsubf2])]
+      ::
         %6
       =/  [subf1=* subf2=* subf3=*]  [+<.f +>-.f +>+.f]
       =/  [hsubf1=phash hsubf2=phash hsubf3=phash]
@@ -85,6 +86,7 @@
           (eval [s subf2] h)
           (eval [s subf3] h)
       [res2 (put-hint [%6 hsubf1 hsubf2 hsubf3])]
+      ::
         %7
       =/  [subf1=* subf2=*]  [+<.f +>.f]
       =/  [hsubf1=phash hsubf2=phash]
@@ -94,6 +96,7 @@
       =^  res2  h
         (eval [res1 subf2] h)
       [res2 (put-hint [%7 hsubf1 hsubf2])]
+      ::
         %8
       =/  [subf1=* subf2=*]  [+<.f +>.f]
       =/  [hsubf1=phash hsubf2=phash]
@@ -103,6 +106,7 @@
       =^  res2  h
         (eval [[res1 s] subf2] h)
       [res2 (put-hint [%8 hsubf1 hsubf2])]
+      ::
         %9
       =/  [axis=* subf1=*]  [+<.f +>.f]
       ?>  ?=(@ axis)
@@ -112,7 +116,8 @@
       =/  f2  .*(res1 [0 axis])
       =^  res2  h
         (eval [res1 f2] h)
-      [res2 (put-hint %9 axis hsubf1)]
+      [res2 (put-hint %9 axis hsubf1 (merk-sibs res1 axis))]
+      ::
         %10
       =/  [axis=* subf1=* subf2=*]  [+<-.f +<+.f +>.f]
       ?>  ?=(@ axis)
@@ -123,13 +128,11 @@
       =^  res2  h
         (eval [s subf2] h)
       =/  res  .*(s f)
-      [res (put-hint %10 axis hsubf1 hsubf2)]
+      [res (put-hint %10 axis hsubf1 hsubf2 (merk-sibs res2 axis))]
+      ::
         %11
       =/  subf1=*  +>.f
-      =/  hsubf1=phash  (~(got by a) subf1)
-      =^  res  h
-        (eval [s subf1] h)
-      [res (put-hint %11 hsubf1)]  :: i think we can just skip the hint
+      (eval [s subf1] h)
     ==
     ::
     ++  put-hint
@@ -143,7 +146,7 @@
     ::  +merk-sibs from bottom to top
     ::
     ++  merk-sibs
-      |=  axis=@
+      |=  [s=* axis=@]
       =|  path=(list phash)
       |-  ^-  (list phash)
       ?:  =(1 axis)
@@ -153,8 +156,10 @@
       =/  pick  (cap axis)
       =/  sibling=phash
         %-  ~(got by a)
-        ?-(pick %2 -.s, %3 +.s)
-      %=  $  
+        ?-(pick %2 +.s, %3 -.s)
+      =/  child  ?-(pick %2 -.s, %3 +.s)
+      %=  $
+        s     child
         axis  (mas axis)
         path  [sibling path]
       ==
