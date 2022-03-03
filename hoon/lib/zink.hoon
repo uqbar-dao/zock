@@ -8,8 +8,8 @@
   ++  eval
     |=  [[s=* f=*] state=eval-state]
     ^-  [res=* state=eval-state]
-    =/  [sroot=phash froot=phash]
-      [(~(got by a) s) (~(got by a) f)]
+    =/  [msroot=(unit phash) mfroot=(unit phash)]
+      [(~(get by a) s) (~(get by a) f)]
     |^
     ~&  >  s
     ~&  >  f
@@ -197,14 +197,14 @@
     ++  put-hint
       |=  mhin=(unit hint)
       ^-  eval-state
-      ?~  mhin
+      ?:  |(?=(~ mhin) ?=(~ msroot) ?=(~ mfroot))
         state
       =/  inner=(map phash hint)
-        (~(gut by h.state) sroot *(map phash hint))
+        (~(gut by h.state) u.msroot *(map phash hint))
       =/  newh
         %+  ~(put by h.state)
-          sroot
-        (~(put by inner) froot u.mhin)
+          u.msroot
+        (~(put by inner) u.mfroot (need mhin))
       state(h newh)
     ::  +merk-sibs from bottom to top
     ::

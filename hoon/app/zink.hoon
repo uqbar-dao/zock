@@ -9,11 +9,12 @@
     $%  state-0
     ==
 ::
-+$  state-0  
++$  state-0
   $:  %0
       cache=(map * phash)
       deps=(jug child parent)
       reqs=(map wire *)           ::  hashes coming back from localhost/Python
+      nouns=(jug * *)             ::  nouns waiting on hashed formulae
   ==
 ::
 +$  card  card:agent:gall
@@ -30,7 +31,7 @@
 ++  on-init
   ^-  (quip card _this)
   ~&  >  '%zink initialized successfully'
-  `this(state [%0 pre-comp *(jug child parent) *(map wire *)])
+  `this(state [%0 pre-comp *(jug child parent) *(map wire *) *(jug * *)])
 ::
 ++  on-save
   ^-  vase
@@ -56,13 +57,27 @@
     =|  st=eval-state:zink
     =^  res  st
       (~(eval zink cache.state) n st)
-    ~&  >  res
-    ~&  >  (crip (en-json:html (all:enjs h.st)))
-    `this
+    ?:  =(tohash.st ~)
+      ~&  >  res
+      ~&  >  (crip (en-json:html (all:enjs h.st)))
+      `this
+    :: else we have subformulae which must be hashed
+    =/  cards
+      %:  turn  tohash.st
+        |=  subf=*
+        :*  %pass  /(scot %uv (cut 5 [0 6] eny.bowl))  %agent
+            [our.bowl %zink]  %poke  %hash-noun  !>(subf)
+        ==
+      ==
+    =/  nouns
+        %-  ~(gas ju nouns.state)
+            (turn tohash.st |=(subf=* [n subf]))
+    :_  this(nouns.state nouns)
+       cards
   ::
   ?:  ?=(%get-hash mark)
     ~&  >>>  `cord`(rsh [3 2] (scot %ui (~(got by c) n)))
-    `this  
+    `this
   ::  else, %hash-noun
   ::
   |^
@@ -85,7 +100,7 @@
     ?^  hn 
       `this
     :_  this(deps.state (~(put ju deps.state) child n))
-    :~  :*  %pass  /(scot %uv (cut 5 [0 6] eny.bowl))  %agent  
+    :~  :*  %pass  /(scot %uv (cut 5 [0 6] eny.bowl))  %agent
             [our.bowl %zink]  %poke  %hash-noun  !>(child)
         ==
     ==
