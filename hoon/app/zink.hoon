@@ -53,11 +53,11 @@
   ::
   ?:  ?=(%eval mark)
     ?>  ?=(^ n)
-    =|  h=hints
-    =^  res  h
-      (~(eval zink cache.state) n h)
+    =|  st=eval-state:zink
+    =^  res  st
+      (~(eval zink cache.state) n st)
     ~&  >  res
-    ~&  >  (crip (en-json:html (all:enjs h)))
+    ~&  >  (crip (en-json:html (all:enjs h.st)))
     `this
   ::
   ?:  ?=(%get-hash mark)
