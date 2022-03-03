@@ -98,7 +98,7 @@
     :_  this(reqs.state (~(put by reqs.state) wir n))
     ~[[%pass wir %arvo %i %request [%'GET' (mk-url h) ~ ~] out]]
   ::
-  ++  mk-url 
+  ++  mk-url
     |=  h=hash-req
     ^-  cord
     =/  base=tape  "http://localhost:3000/pedersen?"

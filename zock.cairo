@@ -21,15 +21,18 @@ const h9 = 314901159023327222580308011405930891752874880087962181223944398713690
 const h10 = 2466881358002133364822637278001945633159199669109451817445969730922553850042
 const h11 = 1602195742608144856779311879863141684990052756940086705696922586637104021594
 
-# root: merkle root
+# axis: axis of leaf in noun 
 # leaf: hashed value or root of subtree
-# axis
-func root_from_axis{hash_ptr : HashBuiltin*}(root, leaf, axis) -> (root):
+# path: list of hashed siblings from bottom to top
+# return: hashed root of tree with leaf at axis and path of siblings
+func root_from_axis{hash_ptr : HashBuiltin*}(axis, leaf, path: felt*) -> (root):
   alloc_locals
-  local sibling : felt
-  %{ 
-    ids.sibling = program_input['merkle_siblings'][str(ids.root)][str(ids.axis)]
-  %}
+
+  if axis == 1:
+      return (leaf)
+  end
+
+  let (sibling) = [path]
 
   if axis == 2:
     let (r) = hash2(x=leaf, y=sibling)
@@ -46,17 +49,19 @@ func root_from_axis{hash_ptr : HashBuiltin*}(root, leaf, axis) -> (root):
 
   right_sibling:
     let (h) = hash2(x=leaf, y=sibling)
-    return root_from_axis(root, leaf=h, axis=axis / 2)
+    return root_from_axis(axis=axis / 2, leaf=h, path=path + 1)
+    #return root_from_axis(root, leaf=h, axis=axis / 2)
 
   left_sibling:
     let (h) = hash2(x=sibling, y=leaf)
-    return root_from_axis(root, leaf=h, axis=(axis -1) / 2)
+    return root_from_axis(axis=(axis - 1)/2, leaf=h, path=path + 1)
+    #return root_from_axis(root, leaf=h, axis=(axis -1) / 2)
 end
 
 # Nock 0
 # s, f: subject, formula
 # result: hashed value or root of subtree; result of running 0
-func zero{hash_ptr : HashBuiltin*}(s, f, axis, result) -> (res):
+func zero{hash_ptr : HashBuiltin*}(s, f, axis, leaf, path: felt*) -> (res):
   alloc_locals
 
   if axis == 0:
@@ -69,13 +74,12 @@ func zero{hash_ptr : HashBuiltin*}(s, f, axis, result) -> (res):
   assert f = h
 
   if axis == 1:
-    assert s = result
-    return(result)
+    return (s)
   end
 
-  let (root) = root_from_axis(s, result, axis) 
+  let (root) = root_from_axis(axis, leaf, path) 
   assert root = s
-  return(result)
+  return (leaf)
 end
 
 # result: hashed value or root of subtree; result of running 1
@@ -210,7 +214,7 @@ func eight{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   return (rsf2)
 end
 
-func nine{hash_ptr : HashBuiltin*}(s, f, axis, subf, leaf) -> (res):
+func nine{hash_ptr : HashBuiltin*}(s, f, axis, subf, path: felt*) -> (res):
   alloc_locals
 
   let (h_axis_subf) = hash2(x=axis, y=subf)
