@@ -32,7 +32,7 @@ func root_from_axis{hash_ptr : HashBuiltin*}(axis, leaf, path: felt*) -> (root):
       return (leaf)
   end
 
-  let (sibling) = [path]
+  local sibling = [path]
 
   if axis == 2:
     let (r) = hash2(x=leaf, y=sibling)
@@ -50,12 +50,10 @@ func root_from_axis{hash_ptr : HashBuiltin*}(axis, leaf, path: felt*) -> (root):
   right_sibling:
     let (h) = hash2(x=leaf, y=sibling)
     return root_from_axis(axis=axis / 2, leaf=h, path=path + 1)
-    #return root_from_axis(root, leaf=h, axis=axis / 2)
 
   left_sibling:
     let (h) = hash2(x=sibling, y=leaf)
     return root_from_axis(axis=(axis - 1)/2, leaf=h, path=path + 1)
-    #return root_from_axis(root, leaf=h, axis=(axis -1) / 2)
 end
 
 # Nock 0
@@ -214,44 +212,40 @@ func eight{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   return (rsf2)
 end
 
-func nine{hash_ptr : HashBuiltin*}(s, f, axis, subf, path: felt*) -> (res):
+func nine{hash_ptr : HashBuiltin*}(s, f, axis, subf, f2, path: felt*) -> (res):
   alloc_locals
 
-  let (h_axis_subf) = hash2(x=axis, y=subf)
+  # assert f = [9 axis subf]
+  let (h_axis) = hash2(x=axis, y=0)
+  let (h_axis_subf) = hash2(x=h_axis, y=subf)
   let (h_f) = hash2(x=h9, y=h_axis_subf)
   assert f = h_f
 
   let (rsubf) = verify(s, subf)
 
-  let (root) = root_from_axis(rsubf, leaf, axis) 
+  let (root) = root_from_axis(axis, f2, path)
   assert root = rsubf
-  let (result) = verify(rsubf, leaf)
+  let (result) = verify(rsubf, f2)
   return (result)
 end
 
-func ten{hash_ptr : HashBuiltin*}(s, f, axis, subf1, subf2) -> (res):
+func ten{hash_ptr : HashBuiltin*}(s, f, axis, subf1, subf2, old_leaf, path: felt*) -> (res):
   alloc_locals
 
-  let (h_subf1_subf2) = hash2(subf1, subf2)
-  let (h_axis_subf1_subf2) = hash2(axis, h_subf1_subf2)
+  # assert f = [10 [axis subf1] subf2]
+  let (h_axis) = hash2(axis, 0)
+  let (h_axis_subf1) = hash2(h_axis, subf1)
+  let (h_axis_subf1_subf2) = hash2(h_axis_subf1, subf2)
   let (h_f) = hash2(h10, h_axis_subf1_subf2)
   assert f = h_f
 
   let (rsf1) = verify(s, subf1)
   let (rsf2) = verify(s, subf2)
 
-  let (root) = root_from_axis(rsf2, rsf1, axis) 
-  return (root)
-end
-
-func eleven{hash_ptr : HashBuiltin*}(s, f, subf) -> (res):
-  alloc_locals
-
-  let (h_f) = hash2(h11, subf)
-  assert f = h_f
-
-  let (res) = verify(s, subf)
-  return (res)
+  let (root) = root_from_axis(axis, old_leaf, path)
+  assert root = rsf2
+  let (new_root) = root_from_axis(axis, rsf1, path) 
+  return (new_root)
 end
 
 func verify{hash_ptr : HashBuiltin*}(s, f) -> (res):
@@ -276,7 +270,7 @@ func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
   local leaf3 = 1457137102687840622469998386657531077922059188363371731706856889535607109733
   local leaf7 = 2258442912665439649622769515993460039756024697697714582745734598954638194578
 
-  let (res) = zero{hash_ptr=pedersen_ptr}(s, f07, 7, leaf7)
+  #let (res) = zero{hash_ptr=pedersen_ptr}(s, f07, 7, leaf7)
   %{ print(ids.res) %}
   serialize_word(res)
   return()

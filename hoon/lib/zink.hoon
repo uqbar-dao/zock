@@ -1,15 +1,15 @@
 /-  *zink
 |%
 ++  zink
-  |_  a=(map * phash)
-  +$  eval-state  [h=hints tohash=(list *)]
-  ::  eval: assumes that a has a full hash cache of nouns used
+  |%
+  +$  eval-state  [h=hints c=(map * phash)]
   ::
   ++  eval
-    |=  [[s=* f=*] state=eval-state]
-    ^-  [res=* state=eval-state]
-    =/  [msroot=(unit phash) mfroot=(unit phash)]
-      [(~(get by a) s) (~(get by a) f)]
+    |=  [[s=* f=*] st=eval-state]
+    ^-  [res=* st=eval-state]
+    =*  c  c.st
+    =^  sroot  c  (hash s c)
+    =^  froot  c  (hash f c)
     |^
     ~&  >  s
     ~&  >  f
@@ -18,216 +18,180 @@
       ::
         ^
       =/  [subf1=* subf2=*]  [-.f +.f]
-      =^  mhsubf1  state  (get-hash subf1)
-      =^  mhsubf2  state  (get-hash subf2)
-      =^  res-head  state
-        (eval [s subf1] state)
-      =^  res-tail  state
-        (eval [s subf2] state)
-      =/  mhint
-        ;<  hsubf1=phash  _biff  mhsubf1
-        ;<  hsubf2=phash  _biff  mhsubf2
-        (some [%cons hsubf1 hsubf2])
+      =^  res-head  st
+        (eval [s subf1] st)
+      =^  res-tail  st
+        (eval [s subf2] st)
+      =^  hsubf1  c  (hash subf1 c)
+      =^  hsubf2  c  (hash subf2 c)
       :-  [res-head res-tail]
-          (put-hint mhint)
+          [(put-hint [%cons hsubf1 hsubf2]) c]
       ::
         %0
       ?>  ?=(@ +.f)
       =/  res  .*(s f)
-      =^  mhres  state  (get-hash res)
-      =/  mhint
-        ;<  hres=phash  _biff  mhres
-        (some [%0 +.f hres (merk-sibs s +.f)])
-      [res (put-hint mhint)]
+      =^  hres  c  (hash res c)
+      =^  sibs  c  (merk-sibs [s +.f] c)
+      [res [(put-hint [%0 +.f hres sibs]) c]]
       ::
         %1
-      =^  mhres  state  (get-hash +.f)
-      =/  mhint
-        ;<  hres=phash  _biff  mhres
-        (some [%1 hres])
-      [+.f (put-hint mhint)]
+      =^  hres  c  (hash +.f c)
+      [+.f [(put-hint [%1 hres]) c]]
       ::
         %2
       =/  [subf1=* subf2=*]  [+<.f +>.f]
-      =^  mhsubf1  state  (get-hash subf1)
-      =^  mhsubf2  state  (get-hash subf2)
-      =^  res1  state
-        (eval [s subf1] state)
-      =^  res2  state
-        (eval [s subf2] state)
-      =/  mhint
-        ;<  hsubf1=phash  _biff  mhsubf1
-        ;<  hsubf2=phash  _biff  mhsubf2
-        (some [%2 hsubf1 hsubf2])
-      [.*(res1 res2) (put-hint mhint)]
+      =^  hsubf1  c  (hash subf1 c)
+      =^  hsubf2  c  (hash subf2 c)
+      =^  res1  st
+        (eval [s subf1] st)
+      =^  res2  st
+        (eval [s subf2] st)
+      [.*(res1 res2) [(put-hint [%2 hsubf1 hsubf2]) c]]
       ::
         %3
-      =^  res  state
-        (eval [s +.f] state)
-      =^  mhsubf  state  (get-hash +.f)
+      =^  res  st
+        (eval [s +.f] st)
+      =^  hsubf  c  (hash +.f c)
       ?@  res     ::  1 for false
-        =/  mhint
-          ;<  hsubf=phash  _biff  mhsubf
-          (some [%3 hsubf %atom res])
-        [1 (put-hint mhint)]
-      =^  mhhash  state  (get-hash -.res)
-      =^  mthash  state  (get-hash +.res)
-      =/  mhint
-        ;<  hsubf=phash  _biff  mhsubf
-        ;<  hhash=phash  _biff  mhhash
-        ;<  thash=phash  _biff  mthash
-        (some [%3 hsubf %cell hhash thash])
-      [0 (put-hint mhint)]
+        [1 [(put-hint [%3 hsubf %atom res]) c]]
+      =^  hhash  c  (hash -.res c)
+      =^  thash  c  (hash +.res c)
+      [0 [(put-hint [%3 hsubf %cell hhash thash]) c]]
       ::
         %4
-      =^  res  state
-        (eval [s +.f] state)
-      =^  mhsubf  state  (get-hash +.f)
+      =^  res  st
+        (eval [s +.f] st)
+      =^  hsubf  c  (hash +.f c)
       ?>  ?=(@ res)
-      =/  mhint
-        ;<  hsubf=phash  _biff  mhsubf
-        (some [%4 hsubf res])
-      [(add 1 res) (put-hint mhint)]
+      [(add 1 res) [(put-hint [%4 hsubf res])] c]
       ::
         %5
       =/  [subf1=* subf2=*]  [+<.f +>.f]
-      =^  mhsubf1  state  (get-hash subf1)
-      =^  mhsubf2  state  (get-hash subf2)
-      =^  res1  state
-        (eval [s subf1] state)
-      =^  res2  state
-        (eval [s subf2] state)
-      =/  mhint
-        ;<  hsubf1=phash  _biff  mhsubf1
-        ;<  hsubf2=phash  _biff  mhsubf2
-        (some [%5 hsubf1 hsubf2])
-      [=(res1 res2) (put-hint mhint)]
+      =^  hsubf1  c  (hash subf1 c)
+      =^  hsubf2  c  (hash subf2 c)
+      =^  res1  st
+        (eval [s subf1] st)
+      =^  res2  st
+        (eval [s subf2] st)
+      [=(res1 res2) [(put-hint [%5 hsubf1 hsubf2]) c]]
       ::
         %6
       =/  [subf1=* subf2=* subf3=*]  [+<.f +>-.f +>+.f]
-      =^  mhsubf1  state  (get-hash subf1)
-      =^  mhsubf2  state  (get-hash subf2)
-      =^  mhsubf3  state  (get-hash subf3)
-      =^  res1  state
-        (eval [s subf1] state)
+      =^  hsubf1  c  (hash subf1 c)
+      =^  hsubf2  c  (hash subf2 c)
+      =^  hsubf3  c  (hash subf3 c)
+      =^  res1  st
+        (eval [s subf1] st)
       ?>  ?|(=(0 res1) =(1 res1))
-      =^  res2  state
+      =^  res2  st
         ?:  =(0 res1)
-          (eval [s subf2] state)
-          (eval [s subf3] state)
-      =/  mhint
-        ;<  hsubf1=phash  _biff  mhsubf1
-        ;<  hsubf2=phash  _biff  mhsubf2
-        ;<  hsubf3=phash  _biff  mhsubf3
-        (some [%6 hsubf1 hsubf2 hsubf3])
-      [res2 (put-hint mhint)]
+          (eval [s subf2] st)
+          (eval [s subf3] st)
+      [res2 [(put-hint [%6 hsubf1 hsubf2 hsubf3])] c]
       ::
         %7
       =/  [subf1=* subf2=*]  [+<.f +>.f]
-      =^  mhsubf1  state  (get-hash subf1)
-      =^  mhsubf2  state  (get-hash subf2)
-      =^  res1  state
-        (eval [s subf1] state)
-      =^  res2  state
-        (eval [res1 subf2] state)
-      =/  mhint
-        ;<  hsubf1=phash  _biff  mhsubf1
-        ;<  hsubf2=phash  _biff  mhsubf2
-        (some [%7 hsubf1 hsubf2])
-      [res2 (put-hint mhint)]
+      =^  hsubf1  c  (hash subf1 c)
+      =^  hsubf2  c  (hash subf2 c)
+      =^  res1  st
+        (eval [s subf1] st)
+      =^  res2  st
+        (eval [res1 subf2] st)
+      [res2 [(put-hint [%7 hsubf1 hsubf2])] c]
       ::
         %8
       =/  [subf1=* subf2=*]  [+<.f +>.f]
-      =^  mhsubf1  state  (get-hash subf1)
-      =^  mhsubf2  state  (get-hash subf2)
-      =^  res1  state
-        (eval [s subf1] state)
-      =^  res2  state
-        (eval [[res1 s] subf2] state)
-      =/  mhint
-        ;<  hsubf1=phash  _biff  mhsubf1
-        ;<  hsubf2=phash  _biff  mhsubf2
-        (some [%8 hsubf1 hsubf2])
-      [res2 (put-hint mhint)]
+      =^  hsubf1  c  (hash subf1 c)
+      =^  hsubf2  c  (hash subf2 c)
+      =^  res1  st
+        (eval [s subf1] st)
+      =^  res2  st
+        (eval [[res1 s] subf2] st)
+      [res2 [(put-hint [%8 hsubf1 hsubf2])] c]
       ::
         %9
       =/  [axis=* subf1=*]  [+<.f +>.f]
       ?>  ?=(@ axis)
-      =^  mhsubf1  state  (get-hash subf1)
-      =^  res1  state
-        (eval [s subf1] state)
+      =^  hsubf1  c  (hash subf1 c)
+      =^  res1  st
+        (eval [s subf1] st)
       =/  f2  .*(res1 [0 axis])
-      =^  res2  state
-        (eval [res1 f2] state)
-      =/  mhint
-        ;<  hsubf1=phash  _biff  mhsubf1
-        (some [%9 axis hsubf1 (merk-sibs res1 axis)])
-      [res2 (put-hint mhint)]
+      =^  res2  st
+        (eval [res1 f2] st)
+      =^  hf2   c  (hash f2 c)
+      =^  sibs  c  (merk-sibs [res1 axis] c)
+      [res2 [(put-hint [%9 axis hsubf1 hf2 sibs])] c]
       ::
         %10
       =/  [axis=* subf1=* subf2=*]  [+<-.f +<+.f +>.f]
       ?>  ?=(@ axis)
-      =^  mhsubf1  state  (get-hash subf1)
-      =^  mhsubf2  state  (get-hash subf2)
-      =^  res1  state
-        (eval [s subf1] state)
-      =^  res2  state
-        (eval [s subf2] state)
+      =^  hsubf1  c  (hash subf1 c)
+      =^  hsubf2  c  (hash subf2 c)
+      =^  res1  st
+        (eval [s subf1] st)
+      =^  res2  st
+        (eval [s subf2] st)
       =/  res  .*(s f)
-      =/  mhint
-        ;<  hsubf1=phash  _biff  mhsubf1
-        ;<  hsubf2=phash  _biff  mhsubf2
-        (some [%10 axis hsubf1 hsubf2 (merk-sibs res2 axis)])
-      [res (put-hint mhint)]
+      =/  oldleaf  .*(subf2 [0 axis])
+      =^  holdleaf  c  (hash oldleaf c)
+      =^  sibs  c  (merk-sibs [res2 axis] c)
+      [res [(put-hint [%10 axis hsubf1 hsubf2 holdleaf sibs])] c]
       ::
         %11
       =/  subf1=*  +>.f
-      (eval [s subf1] state)
+      (eval [s subf1] st)
     ==
     ::
-    ++  get-hash
-      |=  n=*
-      ^-  [(unit phash) eval-state]
-      =/  hn  (~(get by a) n)
-      :-  hn
-      ?~  hn
-      state(tohash [n tohash.state])
-      state
-    ::
     ++  put-hint
-      |=  mhin=(unit hint)
-      ^-  eval-state
-      ?:  |(?=(~ mhin) ?=(~ msroot) ?=(~ mfroot))
-        state
+      |=  hin=hint
+      ^-  hints
       =/  inner=(map phash hint)
-        (~(gut by h.state) u.msroot *(map phash hint))
-      =/  newh
-        %+  ~(put by h.state)
-          u.msroot
-        (~(put by inner) u.mfroot (need mhin))
-      state(h newh)
+        (~(gut by h.st) sroot *(map phash hint))
+      %+  ~(put by h.st)
+        sroot
+      (~(put by inner) froot hin)
     ::  +merk-sibs from bottom to top
     ::
     ++  merk-sibs
-      |=  [s=* axis=@]
+      |=  [[s=* axis=@] c=(map * phash)]
       =|  path=(list phash)
-      |-  ^-  (list phash)
+      |-  ^-  [(list phash) (map * phash)]
       ?:  =(1 axis)
-        path
+        [path c]
       ?~  axis  !!
       ?@  s  !!
       =/  pick  (cap axis)
-      =/  sibling=phash
-        %-  ~(got by a)
-        ?-(pick %2 +.s, %3 -.s)
+      =^  sibling=phash  c
+        %-  hash
+           [?-(pick %2 +.s, %3 -.s) c]
       =/  child  ?-(pick %2 -.s, %3 +.s)
       %=  $
         s     child
         axis  (mas axis)
         path  [sibling path]
+        c     c
       ==
     --
   --
+::  if x is an atom then hash(x)=h(x, 0)
+::  else hash([x y])=h(h(x), h(y))
+::  where h = pedersen hash
+++  hash
+  |=  [n=* c=(map * phash)]
+  ^-  [phash (map * phash)]
+  =/  mh  (~(get by c) n)
+  ?~  mh
+    =/  h  (hash-noun n)
+    [h (~(put by c) n h)]
+  [u.mh c]
+++  hash-noun
+  |=  n=*
+  |-  ^-  phash
+  ?@  n
+    (hash:pedersen:secp:crypto n 0)
+  =/  hh  $(n -.n)
+  =/  ht  $(n +.n)
+  (hash:pedersen:secp:crypto hh ht)
 ++  enjs
   |%
   ++  all
@@ -256,8 +220,9 @@
       ^-  (list json)
       ?-  -.hin
           %0
-        :~  s+'0'  
+        :~  s+'0'
             s+(num axis.hin)
+            s+(num leaf.hin)
             a+(turn path.hin |=(p=phash s+(num p)))
         ==
         ::
@@ -269,8 +234,8 @@
         ::
           %3
         ::  if atom, head and tail are 0
-        ::  
-        :*  s+'3'  s+(num subf.hin) 
+        ::
+        :*  s+'3'  s+(num subf.hin)
             ?-  -.subf-res.hin
                 %atom
               ~[s+(num +.subf-res.hin) s+'0' s+'0']
@@ -298,13 +263,21 @@
         ~[s+'8' s+(num subf1.hin) s+(num subf2.hin)]
         ::
           %9
-        ~[s+'9' s+(num axis.hin) s+(num subf1.hin)]
+        :~  s+'9'
+            s+(num axis.hin)
+            s+(num subf1.hin)
+            s+(num leaf.hin)
+            a+(turn path.hin |=(p=phash s+(num p)))
+        ==
         ::
           %10
-        ~[s+'10' s+(num axis.hin) s+(num subf1.hin) s+(num subf2.hin)]
-        ::
-          %11
-        ~[s+'11' s+(num subf.hin)]
+        :~  s+'10'
+            s+(num axis.hin)
+            s+(num subf1.hin)
+            s+(num subf2.hin)
+            s+(num oldleaf.hin)
+            a+(turn path.hin |=(p=phash s+(num p)))
+        ==
         ::
           %cons
         ~[s+'cons' s+(num subf1.hin) s+(num subf2.hin)]
