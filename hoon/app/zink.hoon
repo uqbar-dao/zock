@@ -52,9 +52,18 @@
   ?:  ?=(%eval mark)
     ?>  ?=(^ n)
     =/  [res=* h=hints c=(map * phash)]  (eval:zink n [*hints c])
-      ~&  >  res
-      ~&  >  (crip (en-json:html (all:enjs h)))
-      `this(cache.state c)
+    =^  hs  c  (hash -.n c)
+    =^  hf  c  (hash +.n c)
+    =/  js=json
+        %-  pairs:enjs:format
+        :~
+          ['subject' s+(num:enjs hs)]
+          ['formula' s+(num:enjs hf)]
+          ['hints' (all:enjs h)]
+        ==
+    ~&  >  "result={<res>}"
+    ~&  >  (crip (en-json:html js))
+    `this(cache.state c)
   ::  else %hash-noun
     =^  h  c  (hash:zink n c)
     ~&  >>>  `cord`(rsh [3 2] (scot %ui h))

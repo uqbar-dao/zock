@@ -11,8 +11,8 @@
     =^  sroot  c  (hash s c)
     =^  froot  c  (hash f c)
     |^
-    ~&  >  s
-    ~&  >  f
+    ~&  >  "s={<s>}"
+    ~&  >  "f={<f>}"
     ?+    -.f  !!
       ::  formula is a cell; do distribution
       ::
@@ -46,7 +46,9 @@
         (eval [s subf1] st)
       =^  res2  st
         (eval [s subf2] st)
-      [.*(res1 res2) [(put-hint [%2 hsubf1 hsubf2]) c]]
+      =^  res3  st
+        (eval [res1 res2] st)
+      [res3 [(put-hint [%2 hsubf1 hsubf2]) c]]
       ::
         %3
       =^  res  st
@@ -115,7 +117,9 @@
       =^  hsubf1  c  (hash subf1 c)
       =^  res1  st
         (eval [s subf1] st)
-      =/  f2  .*(res1 [0 axis])
+      =^  f2  st
+        (eval [res1 [0 axis]] st)
+      ::=/  f2  .*(res1 [0 axis])
       =^  res2  st
         (eval [res1 f2] st)
       =^  hf2   c  (hash f2 c)
@@ -131,8 +135,11 @@
         (eval [s subf1] st)
       =^  res2  st
         (eval [s subf2] st)
-      =/  res  .*(s f)
-      =/  oldleaf  .*(subf2 [0 axis])
+      =^  res  st  (eval [s f] st)
+      =^  oldleaf  st
+        (eval [subf2 [0 axis]] st)
+      ::=/  res  .*(s f)
+      ::=/  oldleaf  .*(subf2 [0 axis])
       =^  holdleaf  c  (hash oldleaf c)
       =^  sibs  c  (merk-sibs [res2 axis] c)
       [res [(put-hint [%10 axis hsubf1 hsubf2 holdleaf sibs])] c]
@@ -248,7 +255,7 @@
         ==
         ::
           %4
-        ~[s+'4' s+(num subf.hin) s+(num subf-res.hin)]
+        ~[s+'4' s+(num subf.hin) s+(num atom.hin)]
         ::
           %5
         ~[s+'5' s+(num subf1.hin) s+(num subf2.hin)]

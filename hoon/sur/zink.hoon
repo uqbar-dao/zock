@@ -22,7 +22,7 @@
               [%cell head=phash tail=phash]
           ==
       ==
-      [%4 subf=phash subf-res=@]
+      [%4 subf=phash atom=@]
       [%5 subf1=phash subf2=phash]
       [%6 subf1=phash subf2=phash subf3=phash]
       [%7 subf1=phash subf2=phash]
