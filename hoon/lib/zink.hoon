@@ -4,6 +4,20 @@
   |%
   +$  eval-state  [h=hints c=(map * phash)]
   ::
+  ++  create-hints
+    |=  [n=* c=(map * phash)]
+    ^-  [js=json res=* c=(map * phash)]
+    ?>  ?=(^ n)
+    =/  [res=* h=hints c=(map * phash)]  (eval:zink n [*hints c])
+    =^  hs  c  (hash -.n c)
+    =^  hf  c  (hash +.n c)
+    :-  %-  pairs:enjs:format
+        :~
+          ['subject' s+(num:enjs hs)]
+          ['formula' s+(num:enjs hf)]
+          ['hints' (all:enjs h)]
+        ==
+    [res c]
   ++  eval
     |=  [[s=* f=*] st=eval-state]
     ^-  [res=* st=eval-state]

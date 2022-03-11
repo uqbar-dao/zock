@@ -2,6 +2,7 @@
 ::  usage
 ::  :zink &eval [[1 2 3] [0 2]]
 ::  :zink &hash-noun [1 2 3]
+::  :zink &eval-hoon /gen/fib/hoon
 ::
 /+  *zink, dbug, default-agent
 |%
@@ -48,25 +49,23 @@
     (on-poke:def mark vase)
   =/  n=*  !<(noun vase)
   =*  c  cache.state
-  ::
+  ::  evaluate raw nock passed in to the poke
   ?:  ?=(%eval mark)
-    ?>  ?=(^ n)
-    =/  [res=* h=hints c=(map * phash)]  (eval:zink n [*hints c])
-    =^  hs  c  (hash -.n c)
-    =^  hf  c  (hash +.n c)
-    =/  js=json
-        %-  pairs:enjs:format
-        :~
-          ['subject' s+(num:enjs hs)]
-          ['formula' s+(num:enjs hf)]
-          ['hints' (all:enjs h)]
-        ==
+    =/  [js=json res=* c=(map * phash)]  (create-hints:zink n c)
     ~&  >  "result={<res>}"
     ~&  >  (crip (en-json:html js))
     `this(cache.state c)
-    :: coming soon
+  ::  read a hoon source file and evaluate
   ?:  ?=(%eval-hoon mark)
-    `this
+    =/  file  !<(path vase)
+    =/  path  (weld /(scot %p our.bowl)/[q.byk.bowl]/(scot %da now.bowl) file)
+    =/  src  .^(@t %cx path)
+    =/  compiled-src  .*(3 `*`(make src))
+    =/  nock  [compiled-src 9 2 10 [6 1 5] 9 10 0 1]
+    =/  [js=json res=* c=(map * phash)]  (create-hints:zink nock c)
+    ~&  >  "result={<res>}"
+    ~&  >  (crip (en-json:html js))
+    `this(cache.state c)
   ::  else %hash-noun
     =^  h  c  (hash:zink n c)
     ~&  >>>  `cord`(rsh [3 2] (scot %ui h))
