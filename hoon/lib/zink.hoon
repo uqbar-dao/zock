@@ -11,8 +11,8 @@
     =^  sroot  c  (hash s c)
     =^  froot  c  (hash f c)
     |^
-    ~&  >  "s={<s>}"
-    ~&  >  "f={<f>}"
+    ::~&  >  "s={<s>}"
+    ::~&  >  "f={<f>}"
     ?+    -.f  !!
       ::  formula is a cell; do distribution
       ::
@@ -119,7 +119,6 @@
         (eval [s subf1] st)
       =^  f2  st
         (eval [res1 [0 axis]] st)
-      ::=/  f2  .*(res1 [0 axis])
       =^  res2  st
         (eval [res1 f2] st)
       =^  hf2   c  (hash f2 c)
@@ -135,11 +134,9 @@
         (eval [s subf1] st)
       =^  res2  st
         (eval [s subf2] st)
-      =^  res  st  (eval [s f] st)
+      =/  res  .*(s f)
       =^  oldleaf  st
-        (eval [subf2 [0 axis]] st)
-      ::=/  res  .*(s f)
-      ::=/  oldleaf  .*(subf2 [0 axis])
+        (eval [res2 0 axis] st)
       =^  holdleaf  c  (hash oldleaf c)
       =^  sibs  c  (merk-sibs [res2 axis] c)
       [res [(put-hint [%10 axis hsubf1 hsubf2 holdleaf sibs])] c]
@@ -187,18 +184,14 @@
   |=  [n=* c=(map * phash)]
   ^-  [phash (map * phash)]
   =/  mh  (~(get by c) n)
-  ?~  mh
-    =/  h  (hash-noun n)
-    [h (~(put by c) n h)]
-  [u.mh c]
-++  hash-noun
-  |=  n=*
-  |-  ^-  phash
+  ?.  ?=(~ mh)  [u.mh c]
   ?@  n
-    (hash:pedersen:secp:crypto n 0)
-  =/  hh  $(n -.n)
-  =/  ht  $(n +.n)
-  (hash:pedersen:secp:crypto hh ht)
+    =/  h  (hash:pedersen:secp:crypto n 0)
+    [h (~(put by c) n h)]
+  =^  hh  c  $(n -.n)
+  =^  ht  c  $(n +.n)
+  =/  h  (hash:pedersen:secp:crypto hh ht)
+    [h (~(put by c) n h)]
 ++  enjs
   |%
   ++  all

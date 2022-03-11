@@ -44,7 +44,7 @@
   |=  [=mark =vase]
   ^-  (quip card _this)
   ?>  (team:title our.bowl src.bowl)
-  ?.  ?=(?(%eval %hash-noun) mark)
+  ?.  ?=(?(%eval %hash-noun %eval-hoon) mark)
     (on-poke:def mark vase)
   =/  n=*  !<(noun vase)
   =*  c  cache.state
@@ -64,6 +64,9 @@
     ~&  >  "result={<res>}"
     ~&  >  (crip (en-json:html js))
     `this(cache.state c)
+    :: coming soon
+  ?:  ?=(%eval-hoon mark)
+    `this
   ::  else %hash-noun
     =^  h  c  (hash:zink n c)
     ~&  >>>  `cord`(rsh [3 2] (scot %ui h))

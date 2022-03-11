@@ -438,6 +438,17 @@ alloc_locals
     ids.subf1 = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.subf2 = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
   %}
+  let (result) = cons(s, f, subf1, subf2)
+  return (result)
+end
+
+func cons{hash_ptr : HashBuiltin*}(s, f, subf1, subf2) -> (res):
+alloc_locals
+
+  # assert f = [subf1 subf2]
+  let (hf) = hash2(subf1, subf2)
+  assert hf = f
+
   let (res1) = verify(s, subf1)
   let (res2) = verify(s, subf2)
   let (result) = hash2(res1, res2)
@@ -559,6 +570,13 @@ func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     ids.f = int(program_input['formula'])
   %}
   let (result) = verify{hash_ptr=pedersen_ptr}(s=s, f=f)
+
+  %{
+    print(ids.s)
+    print(ids.f)
+    print(ids.result)
+  %}
+
   serialize_word(s)
   serialize_word(f)
   serialize_word(result)
