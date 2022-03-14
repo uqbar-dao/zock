@@ -51,25 +51,41 @@
   =*  c  cache.state
   ::  evaluate raw nock passed in to the poke
   ?:  ?=(%eval mark)
-    =/  [js=json res=* c=(map * phash)]  (create-hints:zink n c)
+    ?>  ?=(^ n)
+    ::~&  >  c
+    =/  [js=json res=* c=(map * phash)]  (~(create-hints zink [*hints c]) n)
     ~&  >  "result={<res>}"
     ~&  >  (crip (en-json:html js))
     `this(cache.state c)
   ::  read a hoon source file and evaluate
   ?:  ?=(%eval-hoon mark)
     =/  file  !<(path vase)
-    =/  path  (weld /(scot %p our.bowl)/[q.byk.bowl]/(scot %da now.bowl) file)
-    =/  src  .^(@t %cx path)
-    =/  compiled-src  .*(3 `*`(make src))
-    =/  nock  [compiled-src 9 2 10 [6 1 5] 9 10 0 1]
-    =/  [js=json res=* c=(map * phash)]  (create-hints:zink nock c)
+    ::=/  base  /(scot %p our.bowl)/[q.byk.bowl]/(scot %da now.bowl)
+    ::=/  path  (weld base file)
+    ~&  >  file
+    =/  src  .^(@t %cx file)
+    =/  cs  (slap !>(~) (ream src))
+    =/  nock  [q.cs q:(~(mint ut p.cs) %noun (ream '(fib 5)'))]
+    ::~&  >  (ream '(fib 5)')
+    ::=/  nock  q:(slap cs (ream '.'))  ::  build AST by hand
+    ?>  ?=(^ nock)
+    ::~&  >  nock
+    ::=/  compiled-src  .*(3 `*`(make src))
+   :: =/  nock  [compiled-src 9 2 10 [6 1 5] 9 10 0 1]
+    =/  [js=json res=* c=(map * phash)]  (~(create-hints zink [*hints c]) nock)
     ~&  >  "result={<res>}"
     ~&  >  (crip (en-json:html js))
+   :: =/  json-file  (weld file /json)
+    ::=/  json-file  (weld base (weld /hints (flop file))
+   :: ~&  >  json-file
+    ::=/  wire  /(scot %uv (cut 5 [0 6] eny.bowl))
     `this(cache.state c)
+    :::~  [%pass wire %arvo %c %info %base %& [json-file %ins %json !>(js)]~]
+    ::==
   ::  else %hash-noun
-    =^  h  c  (hash:zink n c)
+    =^  h  c  (hash:zink n)
     ~&  >>>  `cord`(rsh [3 2] (scot %ui h))
-    `this
+    `this(cache.state c)
 ::
 ++  on-arvo  on-arvo:def
 ++  on-watch  on-watch:def
