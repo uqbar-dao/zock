@@ -260,16 +260,19 @@
     |=  zc=zero-cache
     |^  ^-  json
     %-  pairs:enjs:format
-    %+  turn  ~(tap by zc)
-      |=  [sroot=phash v=(map @ud @ud)]
-      [(num sroot) (inner v)]
+    =<  -
+    %^  spin  ~(tap by zc)  0
+      |=  [[sroot=phash v=(map @ud @ud)] i=@ud]
+      =/  res  (inner v i)
+      [[(num sroot) js.res] i.res]
     ++  inner
-      |=  i=(map @ud @ud)
-      ^-  json
-      %-  pairs:enjs:format
-      %+  turn  ~(tap by i)
-        |=  [axis=@ud count=@ud]
-        [(num axis) n+(num count)]
+      |=  [in=(map @ud @ud) i=@ud]
+      ^-  [js=json i=@ud]
+      =/  res
+        %^  spin  ~(tap by in)  i
+          |=  [[axis=@ud count=@ud] j=@ud]
+          [[(num axis) n+(num j)] +(j)]
+      [(pairs:enjs:format -.res) +.res]
     --
   ::
   ++  hints
