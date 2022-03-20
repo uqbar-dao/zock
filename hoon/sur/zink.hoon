@@ -32,7 +32,10 @@
       [%cons subf1=phash subf2=phash]
       ::  [%jet core-hash
   ==
-+$  hints  (map phash (map phash hint))   :: subject -> formula -> hint
+:: subject -> formula -> hint
++$  hints  (map phash (map phash hint))
+:: subject -> axis -> int. cached number of nock 0 lookups
++$  zero-cache  (map phash (map @ud @ud))
 ::
 ++  pre-comp
   %-  ~(gas by *(map * phash))
