@@ -45,7 +45,6 @@
   ::
   ++  eval-door
     |_  st=[h=hints zc=zc-state c=(map * phash)]
-    +$  zc-state  [zc=zero-cache rzc=reverse-zc num=@ud]
     ++  eval
       |=  [s=* f=*]
       ^-  [res=* st=[h=hints zc=zc-state c=(map * phash)]]
@@ -257,25 +256,6 @@
     |=  h=^hints
     ^-  json
     (hints h)
-  ::
-  ++  zc-old
-    |=  zc=zero-cache
-    |^  ^-  json
-    %-  pairs:enjs:format
-    =<  -
-    %^  spin  ~(tap by zc)  0
-      |=  [[sroot=phash v=(map @ud @ud)] i=@ud]
-      =/  res  (inner v i)
-      [[(num sroot) js.res] i.res]
-    ++  inner
-      |=  [in=(map @ud @ud) i=@ud]
-      ^-  [js=json i=@ud]
-      =/  res
-        %^  spin  ~(tap by in)  i
-          |=  [[axis=@ud count=@ud] j=@ud]
-          [[(num axis) n+(num j)] +(j)]
-      [(pairs:enjs:format -.res) +.res]
-    --
   :: zero-cache to json
   ++  zc
     |=  zc=zc-state

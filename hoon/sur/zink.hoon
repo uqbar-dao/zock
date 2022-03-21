@@ -38,6 +38,7 @@
 +$  zero-cache  (map phash (map @ud @ud))
 :: same map but int -> subject -> axis for cairo's benefit
 +$  reverse-zc  (map @ud (map phash @ud))
++$  zc-state  [zc=zero-cache rzc=reverse-zc num=@ud]
 ::
 ++  pre-comp
   %-  ~(gas by *(map * phash))
