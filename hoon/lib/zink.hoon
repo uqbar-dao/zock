@@ -6,13 +6,13 @@
   ++  hash-noun
     |=  n=*
     ^-  [phash (map * phash)]
-    (~(hash eval-door [~ ~ cache]) n)
-  ::  evaluate [s f] with zink
+    (~(hash eval-door [~ *zc-state cache]) n)
+  ::  evaluate nock with zink
   ++  eval-noun
     |=  n=^
     ^-  [res=* hint-js=@t c=(map * phash)]
-    =/  [res=* st=[h=hints zc=zero-cache c=(map * phash)]]
-        (~(eval eval-door [~ ~ cache]) n)
+    =/  [res=* st=[h=hints zc=zc-state c=(map * phash)]]
+          (~(eval eval-door [~ *zc-state cache]) n)
     =/  ch  (create-hints n h.st zc.st)
     [res (crip (en-json:html js.ch)) cache.ch]
   ::  compile a hoon file and evaluate it with zink
@@ -30,11 +30,10 @@
     [%cncl [%wing ~[arm]] ~[(ream sample)]]
   ::  create full hint json
   ++  create-hints
-    |=  [n=^ h=hints zc=zero-cache]
+    |=  [n=^ h=hints zc=zc-state]
     ^-  [js=json cache=(map * phash)]
-    ::~&  >  zc
-    =^  hs  cache  (~(hash eval-door [~ ~ cache]) -.n)
-    =^  hf  cache  (~(hash eval-door [~ ~ cache]) +.n)
+    =^  hs  cache  (~(hash eval-door [~ *zc-state cache]) -.n)
+    =^  hf  cache  (~(hash eval-door [~ *zc-state cache]) +.n)
     :-  %-  pairs:enjs:format
         :~
           ['subject' s+(num:enjs hs)]
@@ -45,10 +44,11 @@
     cache
   ::
   ++  eval-door
-    |_  st=[h=hints zc=zero-cache c=(map * phash)]
+    |_  st=[h=hints zc=zc-state c=(map * phash)]
+    +$  zc-state  [zc=zero-cache rzc=reverse-zc num=@ud]
     ++  eval
       |=  [s=* f=*]
-      ^-  [res=* st=[h=hints zc=zero-cache c=(map * phash)]]
+      ^-  [res=* st=[h=hints zc=zc-state c=(map * phash)]]
       =*  c  c.st
       =*  h  h.st
       =*  zc  zc.st
@@ -201,14 +201,16 @@
         (~(put by inner) froot hin)
       ++  put-zero
         |=  [s=phash axis=@ud]
-        ^-  zero-cache
+        ^-  zc-state
         =/  inner=(map @ud @ud)
-          (~(gut by zc.st) s ~)
-        =/  count=@
-          (~(gut by inner) axis 0)
-        %+  ~(put by zc.st)
-          s
-        (~(put by inner) axis +(count))
+          (~(gut by zc.zc) s ~)
+        ?:  (~(has by inner) axis)  zc
+        :+
+          %+  ~(put by zc.zc)  s
+            (~(put by inner) axis num.zc)
+          %+  ~(put by rzc.zc)  num.zc
+            (my ~[[s axis]])
+          +(num.zc)
       ::  +merk-sibs from bottom to top
       ::
       ++  merk-sibs
@@ -256,7 +258,7 @@
     ^-  json
     (hints h)
   ::
-  ++  zc
+  ++  zc-old
     |=  zc=zero-cache
     |^  ^-  json
     %-  pairs:enjs:format
@@ -274,7 +276,37 @@
           [[(num axis) n+(num j)] +(j)]
       [(pairs:enjs:format -.res) +.res]
     --
-  ::
+  :: zero-cache to json
+  ++  zc
+    |=  zc=zc-state
+    |^  ^-  json
+    %-  pairs:enjs:format
+    :~  ['zc' (zc-to-js zc.zc)]
+        ['reverse-zc' (rzc-to-js rzc.zc)]
+    ==
+    ++  zc-to-js
+      |=  m=zero-cache
+      ^-  json
+      %-  pairs:enjs:format
+      %+  turn  ~(tap by m)
+      |=  [sroot=phash v=(map @ud @ud)]
+      :-  (num sroot)
+      %-  pairs:enjs:format
+      %+  turn  ~(tap by v)
+      |=  [axis=@ud i=@ud]
+      [(num axis) n+(num i)]
+    ++  rzc-to-js
+      |=  m=reverse-zc
+      ^-  json
+      %-  pairs:enjs:format
+      %+  turn  ~(tap by m)
+      |=  [i=@ud v=(map phash @ud)]
+      :-  (num i)
+      %-  pairs:enjs:format
+      %+  turn  ~(tap by v)
+      |=  [s=phash axis=@ud]
+      [(num s) n+(num axis)]
+    --
   ++  hints
     |=  h=^hints
     |^  ^-  json

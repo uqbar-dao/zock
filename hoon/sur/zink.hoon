@@ -36,6 +36,8 @@
 +$  hints  (map phash (map phash hint))
 :: subject -> axis -> int. cached number of nock 0 lookups
 +$  zero-cache  (map phash (map @ud @ud))
+:: same map but int -> subject -> axis for cairo's benefit
++$  reverse-zc  (map @ud (map phash @ud))
 ::
 ++  pre-comp
   %-  ~(gas by *(map * phash))
