@@ -8,7 +8,7 @@
   ==
 ::
 +$  hint
-  $%  [%0 axis=@ leaf=phash path=(list phash)]
+  $%  [%0 axis=@]
       [%1 res=phash]
       [%2 subf1=phash subf2=phash]
       ::  encodes to 
@@ -34,6 +34,8 @@
   ==
 :: subject -> formula -> hint
 +$  hints  (map phash (map phash hint))
+::  map of a noun's merkle children. root -> [left right]
++$  merk-tree  (map phash [phash phash])
 :: subject -> axis -> int. cached number of nock 0 lookups
 +$  zero-cache  (map phash (map @ud @ud))
 :: same map but int -> subject -> axis for cairo's benefit

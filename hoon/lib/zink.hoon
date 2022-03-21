@@ -6,14 +6,14 @@
   ++  hash-noun
     |=  n=*
     ^-  [phash (map * phash)]
-    (~(hash eval-door [~ *zc-state cache]) n)
+    (~(hash eval-door [~ *zc-state ~ cache]) n)
   ::  evaluate nock with zink
   ++  eval-noun
     |=  n=^
     ^-  [res=* hint-js=@t c=(map * phash)]
-    =/  [res=* st=[h=hints zc=zc-state c=(map * phash)]]
-          (~(eval eval-door [~ *zc-state cache]) n)
-    =/  ch  (create-hints n h.st zc.st)
+    =/  [res=* st=[h=hints zc=zc-state merks=merk-tree c=(map * phash)]]
+          (~(eval eval-door [~ *zc-state ~ cache]) n)
+    =/  ch  (create-hints n h.st zc.st merks.st)
     [res (crip (en-json:html js.ch)) cache.ch]
   ::  compile a hoon file and evaluate it with zink
   ++  eval-hoon
@@ -30,27 +30,29 @@
     [%cncl [%wing ~[arm]] ~[(ream sample)]]
   ::  create full hint json
   ++  create-hints
-    |=  [n=^ h=hints zc=zc-state]
+    |=  [n=^ h=hints zc=zc-state merks=merk-tree]
     ^-  [js=json cache=(map * phash)]
-    =^  hs  cache  (~(hash eval-door [~ *zc-state cache]) -.n)
-    =^  hf  cache  (~(hash eval-door [~ *zc-state cache]) +.n)
+    =^  hs  cache  (~(hash eval-door [~ *zc-state ~ cache]) -.n)
+    =^  hf  cache  (~(hash eval-door [~ *zc-state ~ cache]) +.n)
     :-  %-  pairs:enjs:format
         :~
           ['subject' s+(num:enjs hs)]
           ['formula' s+(num:enjs hf)]
           ['hints' (all:enjs h)]
           ['zero-cache' (zc:enjs zc)]
+          ['merks' (merks:enjs merks)]
         ==
     cache
   ::
   ++  eval-door
-    |_  st=[h=hints zc=zc-state c=(map * phash)]
+    |_  st=[h=hints zc=zc-state merks=merk-tree c=(map * phash)]
     ++  eval
       |=  [s=* f=*]
-      ^-  [res=* st=[h=hints zc=zc-state c=(map * phash)]]
+      ^-  [res=* st=[h=hints zc=zc-state merks=merk-tree c=(map * phash)]]
       =*  c  c.st
       =*  h  h.st
       =*  zc  zc.st
+      =*  merks  merks.st
       =^  sroot  c  (hash s)
       =^  froot  c  (hash f)
       |^
@@ -68,19 +70,22 @@
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
         :-  [res-head res-tail]
-            [(put-hint [%cons hsubf1 hsubf2]) zc c]
+            [(put-hint [%cons hsubf1 hsubf2]) zc merks c]
         ::
           %0
         ?>  ?=(@ +.f)
         =/  res  .*(s f)
-        =^  hres  c  (hash res)
-        =^  sibs  c  (merk-sibs [s +.f])
+        =/  axis  +.f
         ::~&  >  "%0 s={<sroot>} axis={<+.f>}"
-        [res [(put-hint [%0 +.f hres sibs]) (put-zero [sroot +.f]) c]]
+        :*  res
+            (put-hint [%0 axis])
+            (put-zero [sroot axis])
+            (put-merks s axis)
+        ==
         ::
           %1
         =^  hres  c  (hash +.f)
-        [+.f [(put-hint [%1 hres]) zc c]]
+        [+.f [(put-hint [%1 hres]) zc merks c]]
         ::
           %2
         =/  [subf1=* subf2=*]  [+<.f +>.f]
@@ -92,24 +97,24 @@
           (eval [s subf2])
         =^  res3  st
           (eval [res1 res2])
-        [res3 [(put-hint [%2 hsubf1 hsubf2]) zc c]]
+        [res3 [(put-hint [%2 hsubf1 hsubf2]) zc merks c]]
         ::
           %3
         =^  res  st
           (eval [s +.f])
         =^  hsubf  c  (hash +.f)
         ?@  res     ::  1 for false
-          [1 [(put-hint [%3 hsubf %atom res]) zc c]]
+          [1 [(put-hint [%3 hsubf %atom res]) zc merks c]]
         =^  hhash  c  (hash -.res)
         =^  thash  c  (hash +.res)
-        [0 [(put-hint [%3 hsubf %cell hhash thash]) zc c]]
+        [0 [(put-hint [%3 hsubf %cell hhash thash]) zc merks c]]
         ::
           %4
         =^  res  st
           (eval [s +.f])
         =^  hsubf  c  (hash +.f)
         ?>  ?=(@ res)
-        [(add 1 res) [(put-hint [%4 hsubf res])] zc c]
+        [(add 1 res) [(put-hint [%4 hsubf res])] zc merks c]
         ::
           %5
         =/  [subf1=* subf2=*]  [+<.f +>.f]
@@ -119,7 +124,7 @@
           (eval [s subf1])
         =^  res2  st
           (eval [s subf2])
-        [=(res1 res2) [(put-hint [%5 hsubf1 hsubf2]) zc c]]
+        [=(res1 res2) [(put-hint [%5 hsubf1 hsubf2]) zc merks c]]
         ::
           %6
         =/  [subf1=* subf2=* subf3=*]  [+<.f +>-.f +>+.f]
@@ -133,7 +138,7 @@
           ?:  =(0 res1)
             (eval [s subf2])
             (eval [s subf3])
-        [res2 [(put-hint [%6 hsubf1 hsubf2 hsubf3])] zc c]
+        [res2 [(put-hint [%6 hsubf1 hsubf2 hsubf3])] zc merks c]
         ::
           %7
         =/  [subf1=* subf2=*]  [+<.f +>.f]
@@ -143,7 +148,7 @@
           (eval [s subf1])
         =^  res2  st
           (eval [res1 subf2])
-        [res2 [(put-hint [%7 hsubf1 hsubf2])] zc c]
+        [res2 [(put-hint [%7 hsubf1 hsubf2])] zc merks c]
         ::
           %8
         =/  [subf1=* subf2=*]  [+<.f +>.f]
@@ -153,7 +158,7 @@
           (eval [s subf1])
         =^  res2  st
           (eval [[res1 s] subf2])
-        [res2 [(put-hint [%8 hsubf1 hsubf2])] zc c]
+        [res2 [(put-hint [%8 hsubf1 hsubf2])] zc merks c]
         ::
           %9
         =/  [axis=* subf1=*]  [+<.f +>.f]
@@ -167,7 +172,7 @@
           (eval [res1 f2])
         =^  hf2   c  (hash f2)
         =^  sibs  c  (merk-sibs [res1 axis])
-        [res2 [(put-hint [%9 axis hsubf1 hf2 sibs])] zc c]
+        [res2 [(put-hint [%9 axis hsubf1 hf2 sibs])] zc merks c]
         ::
           %10
         =/  [axis=* subf1=* subf2=*]  [+<-.f +<+.f +>.f]
@@ -183,7 +188,7 @@
           (eval [res2 0 axis])
         =^  holdleaf  c  (hash oldleaf)
         =^  sibs  c  (merk-sibs [res2 axis])
-        [res [(put-hint [%10 axis hsubf1 hsubf2 holdleaf sibs])] zc c]
+        [res [(put-hint [%10 axis hsubf1 hsubf2 holdleaf sibs])] zc merks c]
         ::
           %11
         =/  subf1=*  +>.f
@@ -198,6 +203,7 @@
         %+  ~(put by h.st)
           sroot
         (~(put by inner) froot hin)
+      ::
       ++  put-zero
         |=  [s=phash axis=@ud]
         ^-  zc-state
@@ -210,6 +216,21 @@
           %+  ~(put by rzc.zc)  num.zc
             (my ~[[s axis]])
           +(num.zc)
+      ::  build merkel children while walking down the axis of the noun
+      ++  put-merks
+        |=  [s=* axis=@]
+        ^-  [merk-tree (map * phash)]
+        ?@  s  [merks.st c]
+        ?:  =(axis 1)  [merks.st c]
+        ?~  axis  !!
+        =/  pick  (cap axis)
+        =/  child  ?-(pick %2 -.s, %3 +.s)
+        =^  newmerks  c  (put-merks child (mas axis))
+        =^  hs  c  (hash s)
+        =^  hl  c  (hash -.s)
+        =^  hr  c  (hash +.s)
+        =.  merks  (~(put by newmerks) hs [hl hr])
+        [merks c]
       ::  +merk-sibs from bottom to top
       ::
       ++  merk-sibs
@@ -256,6 +277,14 @@
     |=  h=^hints
     ^-  json
     (hints h)
+  ::  merkel kids to json
+  ++  merks
+    |=  m=merk-tree
+    ^-  json
+    %-  pairs:enjs:format
+    %+  turn  ~(tap by m)
+    |=  [root=phash l=phash r=phash]
+    [(num root) a+[s+(num l) s+(num r) ~]]
   :: zero-cache to json
   ++  zc
     |=  zc=zc-state
@@ -310,8 +339,6 @@
           %0
         :~  s+'0'
             s+(num axis.hin)
-            s+(num leaf.hin)
-            a+(turn path.hin |=(p=phash s+(num p)))
         ==
         ::
           %1
