@@ -170,9 +170,12 @@
           (eval [res1 [0 axis]])
         =^  res2  st
           (eval [res1 f2])
-        =^  hf2   c  (hash f2)
-        =^  sibs  c  (merk-sibs [res1 axis])
-        [res2 [(put-hint [%9 axis hsubf1 hf2 sibs])] zc merks c]
+        =^  hres1  c  (hash res1)
+        :*  res2
+            (put-hint [%9 axis hsubf1])
+            (put-zero hres1 axis)
+            (put-merks res1 axis)
+        ==
         ::
           %10
         =/  [axis=* subf1=* subf2=*]  [+<-.f +<+.f +>.f]
@@ -184,11 +187,14 @@
         =^  res2  st
           (eval [s subf2])
         =/  res  .*(s f)
-        =^  oldleaf  st
-          (eval [res2 0 axis])
-        =^  holdleaf  c  (hash oldleaf)
-        =^  sibs  c  (merk-sibs [res2 axis])
-        [res [(put-hint [%10 axis hsubf1 hsubf2 holdleaf sibs])] zc merks c]
+        =^  hres  c  (hash res)
+        =^  newmerks  c  (put-merks res2 axis)
+        =.  merks  newmerks
+        :*  res
+            (put-hint [%10 axis hsubf1 hsubf2 hres])
+            zc
+            (put-merks res axis)
+        ==
         ::
           %11
         =/  subf1=*  +>.f
@@ -381,8 +387,6 @@
         :~  s+'9'
             s+(num axis.hin)
             s+(num subf1.hin)
-            s+(num leaf.hin)
-            a+(turn path.hin |=(p=phash s+(num p)))
         ==
         ::
           %10
@@ -390,8 +394,7 @@
             s+(num axis.hin)
             s+(num subf1.hin)
             s+(num subf2.hin)
-            s+(num oldleaf.hin)
-            a+(turn path.hin |=(p=phash s+(num p)))
+            s+(num newroot.hin)
         ==
         ::
           %cons
