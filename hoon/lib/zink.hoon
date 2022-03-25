@@ -2,6 +2,14 @@
 |%
 ++  zink
   |_  cache=(map * phash)
+  ::  compile a hoon file and print out the nock.
+  ++  build-hoon
+    |=  [file=path]
+    ^-  [@ @ (map * phash)]
+    =/  src  .^(@t %cx file)
+    =/  nock  (slap !>(~) (ream src))
+    ~&  >  nock
+    [0 0 cache]
   ::  pederson hash noun
   ++  hash-noun
     |=  n=*
@@ -17,10 +25,14 @@
     [res (crip (en-json:html js.ch)) cache.ch]
   ::  compile a hoon file and evaluate it with zink
   ++  eval-hoon
-    |=  [file=path arm=@tas sample=@t]
+    |=  [lib=path file=path arm=@tas sample=@t]
     ^-  [res=* hint-js=@t c=(map * phash)]
+    =/  libsrc  .^(@t %cx lib)
+    =/  clib  (slap !>(~) (ream libsrc))
+    ~&  >  "clib={<q.clib>}"
     =/  src  .^(@t %cx file)
-    =/  cs  (slap !>(~) (ream src))
+    =/  cs  (slap clib (ream src))
+    ~&  >  "cs={<q.cs>}"
     =/  nock  [q.cs q:(~(mint ut p.cs) %noun (make-hoon arm sample))]
     (eval-noun nock)
   ::  create hoon AST to call core
@@ -56,6 +68,7 @@
       =^  sroot  c  (hash s)
       =^  froot  c  (hash f)
       |^
+      ::~&  >  "{<s>}  {<f>}"
       ::~&  >  "s={<s>}"
       ::~&  >  "f={<f>}"
       ?+    -.f  !!
@@ -163,6 +176,11 @@
           %9
         =/  [axis=* subf1=*]  [+<.f +>.f]
         ?>  ?=(@ axis)
+        =/  mjet  (jet s f)
+        ?.  ?=(~ mjet)
+          ~&  >  "found jet: {<u.mjet>}"
+          u.mjet
+::        ~&  >  f
         =^  hsubf1  c  (hash subf1)
         =^  res1  st
           (eval [s subf1])
@@ -171,6 +189,7 @@
         =^  res2  st
           (eval [res1 f2])
         =^  hres1  c  (hash res1)
+ ::       ~&  >  f2
         :*  res2
             (put-hint [%9 axis hsubf1])
             (put-zero hres1 axis)
@@ -200,6 +219,37 @@
         =/  subf1=*  +>.f
         (eval [s subf1])
       ==
+      ::  match jet
+      ++  jet
+        |=  [s=* f=*]
+        ~&  >  "s={<s>} f={<f>}"
+        ^-  (unit [res=* st=[h=hints zc=zc-state merks=merk-tree c=(map * phash)]])
+        =/  jet-map=(map phash @t)  static-jets
+        =/  [axis=* subf=*]  [+<.f +>.f]
+        ?.  =(-.subf %10)  ~
+        ~&  >  "found %10"
+        =/  [axis-10=* subf1-10=* subf2-10=*]  [+<-.subf +<+.subf +>.subf]
+        ?.  =(axis-10 6)  ~
+        ~&  >  "found axis 6"
+        =/  new-noun  .*(s subf2-10)
+        ::  check if new-noun is a jetted core
+        =^  hnew-noun  c  (hash new-noun)
+        =/  mjet  (~(get by jet-map) hnew-noun)
+        ?:  ?=(~ mjet)
+          ~&  >  "Didn't find core: {<new-noun>}"
+          ~&  >  "hnew-houn: {<hnew-noun>}"
+          ~
+        ~&  >  "found core! {<new-noun>}"
+        ~&  >  "found hnew-houn: {<hnew-noun>}"
+        =/  sample  .*(s subf1-10)
+        =/  res  .*(s f)  :: TODO run the actual jet here
+        %-  some
+        :*  res
+            (put-hint [%jet hnew-noun sample u.mjet])
+            zc
+            merks
+            c
+        ==
       ::
       ++  put-hint
         |=  hin=hint
@@ -399,6 +449,9 @@
         ::
           %cons
         ~[s+'cons' s+(num subf1.hin) s+(num subf2.hin)]
+        ::
+          %jet
+        ~[s+'jet' s+(num core.hin) s+(crip "{<sample.hin>}") s+jet.hin]
       ==
     --
   ::
