@@ -8,15 +8,15 @@
   ==
 ::
 +$  hint
-  $%  [%0 axis=@]
+  $%  [%0 axis=@ leaf=phash path=(list phash)]
       [%1 res=phash]
       [%2 subf1=phash subf2=phash]
-      ::  encodes to 
+      ::  encodes to
       ::   [3 subf-hash atom 0] if atom
       ::   [3 subf-hash 0 cell-hash cell-hash] if cell
       ::
-      $:  %3 
-          subf=phash 
+      $:  %3
+          subf=phash
           $=  subf-res
           $%  [%atom @]
               [%cell head=phash tail=phash]
@@ -27,20 +27,15 @@
       [%6 subf1=phash subf2=phash subf3=phash]
       [%7 subf1=phash subf2=phash]
       [%8 subf1=phash subf2=phash]
-      [%9 axis=@ subf1=phash]
-      [%10 axis=@ subf1=phash subf2=phash newroot=phash]
+      [%9 axis=@ subf1=phash leaf=phash path=(list phash)]
+      [%10 axis=@ subf1=phash subf2=phash oldleaf=phash path=(list phash)]
       [%cons subf1=phash subf2=phash]
-      ::  [%jet core-hash
+      ::[%jet core=phash sample=* jet=@t]
   ==
 :: subject -> formula -> hint
 +$  hints  (map phash (map phash hint))
 ::  map of a noun's merkle children. root -> [left right]
 +$  merk-tree  (map phash [phash phash])
-:: subject -> axis -> int. cached number of nock 0 lookups
-+$  zero-cache  (map phash (map @ud @ud))
-:: same map but int -> subject -> axis for cairo's benefit
-+$  reverse-zc  (map @ud (map phash @ud))
-+$  zc-state  [zc=zero-cache rzc=reverse-zc num=@ud]
 ::
 ++  pre-comp
   %-  ~(gas by *(map * phash))

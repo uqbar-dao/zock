@@ -6,10 +6,6 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.math import abs_value
 from starkware.cairo.common.math import sign 
-from starkware.cairo.common.alloc import alloc
-
-from cap import cap
-from mas import mas
 
 # constants of common integer hashes
 const h0 = 2089986280348253421170679821480865132823066470938446095505822317253594081284
@@ -25,114 +21,64 @@ const h9 = 314901159023327222580308011405930891752874880087962181223944398713690
 const h10 = 2466881358002133364822637278001945633159199669109451817445969730922553850042
 const h11 = 1602195742608144856779311879863141684990052756940086705696922586637104021594
 
-func leaf_from_axis{hash_ptr : HashBuiltin*}(root : felt, axis : felt, cache: CacheEntry*, cache_size : felt) -> (leaf):
+# axis: axis of leaf in noun 
+# leaf: hashed value or root of subtree
+# path: list of hashed siblings from bottom to top
+# return: hashed root of tree with leaf at axis and path of siblings
+func root_from_axis{hash_ptr : HashBuiltin*}(axis, leaf, path: felt*) -> (root):
   alloc_locals
 
   if axis == 1:
-    return (root)
+      return (leaf)
   end
 
-  let (lookup) = lookup_cache_safe(cache, cache_size, root, axis)
-  if lookup != 0:
-    return (lookup)
-  end
-
-  local left
-  local right
-  local child
-  %{
-    ids.left = int(program_input['merks'][str(ids.root)][0])
-    ids.right = int(program_input['merks'][str(ids.root)][1])
-  %}
-  let (h) = hash2(left, right)
-  assert root = h
+  local sibling = [path]
 
   if axis == 2:
-    return (left)
+    let (r) = hash2(x=leaf, y=sibling)
+    return (root=r)
   end
 
   if axis == 3:
-    return (right)
+    let (r) = hash2(x=sibling, y=leaf)
+    return(root=r)
   end
 
-  let (c) = cap(axis)
-  if c == 2:
-    child = left
-  end
+  %{ memory[ap] = ids.axis % 2 %}
+  jmp left_sibling if [ap] != 0; ap++
 
-  if c == 3:
-    child = right
-  end
+  right_sibling:
+    let (h) = hash2(x=leaf, y=sibling)
+    return root_from_axis(axis=axis / 2, leaf=h, path=path + 1)
 
-  let (m) = mas(axis)
-  let (result) = leaf_from_axis(child, m, cache, cache_size)
-  return (result)
+  left_sibling:
+    let (h) = hash2(x=sibling, y=leaf)
+    return root_from_axis(axis=(axis - 1)/2, leaf=h, path=path + 1)
 end
 
-# memory slot. descend old and updated trees checking that merkel siblings are identical.
-# return leaf in new tree.
-func slot{hash_ptr : HashBuiltin*}(old_root, new_root, axis) -> (leaf): 
-  alloc_locals
 
-  if axis == 1:
-    return (new_root)
-  end  
-
-  local old_left
-  local old_right
-  local new_left
-  local new_right
-  %{
-    ids.old_left = int(program_input['merks'][str(ids.old_root)][0])
-    ids.old_right = int(program_input['merks'][str(ids.old_root)][1])
-    ids.new_left = int(program_input['merks'][str(ids.new_root)][0])
-    ids.new_right = int(program_input['merks'][str(ids.new_root)][1])
-  %}  
-
-  let (oldh) = hash2(old_left, old_right)
-  let (newh) = hash2(new_left, new_right)
-  assert old_root = oldh
-  assert new_root = newh
-
-  local old_child
-  local new_child
-  local old_sib
-  local new_sib
-  let (c) = cap(axis)
-  if c == 2:
-    old_child = old_left
-    new_child = new_left
-    old_sib = old_right
-    new_sib = new_right
-  end
-
-  if c == 3:
-    old_child = old_right
-    new_child = new_right
-    old_sib = old_left
-    new_sib = new_left
-  end
-
-  assert old_sib = new_sib  # merkel siblings much be identical in old and updated tree
-  let (m) = mas(axis)
-  return slot(old_child, new_child, m) 
-end
-
-func verify_zero{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_zero{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local axis
+  local leaf 
+  local path : felt*
   %{
     ids.axis = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
+    ids.leaf = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
+    sibs = program_input['hints'][str(ids.s)][str(ids.f)][3]
+    ids.path = path = segments.add()
+    for i, val in enumerate(sibs):
+      memory[ids.path + i] = int(val)
   %}
-  let (result) = zero(s, f, axis, cache)
+  let (result) = zero(s, f, axis, leaf, path)
   return (result)
 end
 
 # Nock 0
 # s, f: subject, formula
 # result: hashed value or root of subtree; result of running 0
-func zero{hash_ptr : HashBuiltin*}(s, f, axis, cache: CacheEntry*) -> (res):
+func zero{hash_ptr : HashBuiltin*}(s, f, axis, leaf, path: felt*) -> (res):
   alloc_locals
 
   if axis == 0:
@@ -148,23 +94,24 @@ func zero{hash_ptr : HashBuiltin*}(s, f, axis, cache: CacheEntry*) -> (res):
     return (s)
   end
 
-  let (leaf) = lookup_cache(cache, s, axis)
+  let (root) = root_from_axis(axis, leaf, path) 
+  assert root = s
   return (leaf)
 end
 
-func verify_one{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_one{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local res
   %{
     ids.res = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
   %}
-  let (result) = one(s, f, res, cache)
+  let (result) = one(s, f, res)
   return (result)
 end
 
 # result: hashed value or root of subtree; result of running 1
-func one{hash_ptr : HashBuiltin*}(s, f, result, cache: CacheEntry*) -> (res):
+func one{hash_ptr : HashBuiltin*}(s, f, result) -> (res):
   alloc_locals
 
   # assert f = [1 result]
@@ -174,7 +121,7 @@ func one{hash_ptr : HashBuiltin*}(s, f, result, cache: CacheEntry*) -> (res):
   return (result)
 end
 
-func verify_two{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_two{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local sf1
@@ -183,14 +130,14 @@ func verify_two{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     ids.sf1 = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.sf2 = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
   %}
-  let (result) = two(s, f, sf1, sf2, cache)
+  let (result) = two(s, f, sf1, sf2)
   return (result)
 end
 
 # sf1: first subformula
 # sf2: second subformula
 # result: hashed value or root of subtree; result of running 2
-func two{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res):
+func two{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   alloc_locals
 
   # assert f = [2 sf1 sf2]
@@ -198,14 +145,14 @@ func two{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res):
   let (h_f) = hash2(x=h2, y=h_sf1_sf2)
   assert f = h_f
 
-  let (res_sf1) = verify(s, sf1, cache)
-  let (res_sf2) = verify(s, sf2, cache)
+  let (res_sf1) = verify(s, sf1)
+  let (res_sf2) = verify(s, sf2)
  
-  let (result) = verify(s=res_sf1, f=res_sf2, cache=cache)
+  let (result) = verify(s=res_sf1, f=res_sf2)
   return(result)
 end
 
-func verify_three{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_three{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local sf
@@ -218,18 +165,18 @@ func verify_three{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     ids.head = int(program_input['hints'][str(ids.s)][str(ids.f)][3])
     ids.tail = int(program_input['hints'][str(ids.s)][str(ids.f)][4])
   %}
-  let (result) = three(s, f, sf, atom, head, tail, cache)
+  let (result) = three(s, f, sf, atom, head, tail)
   return (result)
 end
 
 # if head is 0, then this is an atom
-func three{hash_ptr : HashBuiltin*}(s, f, sf, atom, head, tail, cache: CacheEntry*) -> (res):
+func three{hash_ptr : HashBuiltin*}(s, f, sf, atom, head, tail) -> (res):
   let (h) = hash2(x=h3, y=sf)
   assert f = h
 
   # atom
   if head == 0:
-    let (res) = verify(s, sf, cache)
+    let (res) = verify(s, sf)
     let (h_a) = hash2(x=atom, y=0)
     assert h_a = res
     return(h1)
@@ -245,13 +192,13 @@ func three{hash_ptr : HashBuiltin*}(s, f, sf, atom, head, tail, cache: CacheEntr
   end
 
   # cell
-  let (res) = verify(s, sf, cache)
+  let (res) = verify(s, sf)
   let (h_ht) = hash2(x=head, y=tail)
   assert h_ht = res
   return(h0)
 end
 
-func verify_four{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_four{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local sf
@@ -260,27 +207,27 @@ func verify_four{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     ids.sf = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.atom = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
   %}
-  let (result) = four(s, f, sf, atom, cache)
+  let (result) = four(s, f, sf, atom)
   return (result)
 end
 
 # sf: subformula
 # atom: atom returned by subformula
-func four{hash_ptr : HashBuiltin*}(s, f, sf, atom, cache: CacheEntry*) -> (res):
+func four{hash_ptr : HashBuiltin*}(s, f, sf, atom) -> (res):
   alloc_locals
 
   # assert f = [4 sf]
   let (h) = hash2(x=h4, y=sf)
   assert f = h
 
-  let (res) = verify(s, sf, cache)
+  let (res) = verify(s, sf)
   let (h_a_dec) = hash2(x=atom, y=0)
   assert h_a_dec = res
   let (h_a) = hash2(x=atom + 1, y=0)
   return(h_a)
 end
 
-func verify_five{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_five{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local sf1
@@ -289,11 +236,11 @@ func verify_five{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     ids.sf1 = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.sf2 = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
   %}
-  let (result) = five(s, f, sf1, sf2, cache)
+  let (result) = five(s, f, sf1, sf2)
   return (result)
 end
 
-func five{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res):
+func five{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   alloc_locals
 
   # assert f = [5 sf1 sf2]
@@ -301,9 +248,9 @@ func five{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res):
   let (h_f) = hash2(x=h5, y=h_sf1_sf2)
   assert f = h_f
 
-  let (rsf1) = verify(s, sf1, cache)
+  let (rsf1) = verify(s, sf1)
   local res_sf1 = rsf1
-  let (res_sf2) = verify(s, sf2, cache)
+  let (res_sf2) = verify(s, sf2)
  
   if res_sf1 == res_sf2:
     return(h0)
@@ -311,7 +258,7 @@ func five{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res):
   return(h1)
 end
 
-func verify_six{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_six{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local sf1
@@ -322,11 +269,11 @@ func verify_six{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     ids.sf2 = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
     ids.sf3 = int(program_input['hints'][str(ids.s)][str(ids.f)][3])
   %}
-  let (result) = six(s, f, sf1, sf2, sf3, cache)
+  let (result) = six(s, f, sf1, sf2, sf3)
   return (result)
 end
 
-func six{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, sf3, cache: CacheEntry*) -> (res):
+func six{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, sf3) -> (res):
   alloc_locals
 
   # assert f = [6 sf1 sf2 sf3]
@@ -335,15 +282,15 @@ func six{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, sf3, cache: CacheEntry*) -> (r
   let (h_f) = hash2(x=h6, y=h_sf1_sf2_sf3)
   assert f = h_f
 
-  let (rsf1) = verify(s, sf1, cache)
+  let (rsf1) = verify(s, sf1)
 
   if rsf1 == h0:
-    let (result) = verify(s, sf2, cache)
+    let (result) = verify(s, sf2)
     return (result)
   end
 
   if rsf1 == h1:
-    let (result) = verify(s, sf3, cache)
+    let (result) = verify(s, sf3)
     return (result)
   end
 
@@ -351,7 +298,7 @@ func six{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, sf3, cache: CacheEntry*) -> (r
   return (0)       # should never get here
 end
 
-func verify_seven{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_seven{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local sf1
@@ -360,11 +307,11 @@ func verify_seven{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     ids.sf1 = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.sf2 = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
   %}
-  let (result) = seven(s, f, sf1, sf2, cache)
+  let (result) = seven(s, f, sf1, sf2)
   return (result)
 end
 
-func seven{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res):
+func seven{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   alloc_locals
 
   # assert f = [7 sf1 sf2]
@@ -372,12 +319,12 @@ func seven{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res)
   let (h_f) = hash2(x=h7, y=h_sf1_sf2)
   assert f = h_f
 
-  let (rsf1) = verify(s, sf1, cache)
-  let (result) = verify(rsf1, sf2, cache)
+  let (rsf1) = verify(s, sf1)
+  let (result) = verify(rsf1, sf2)
   return (result)
 end
 
-func verify_eight{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_eight{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local sf1
@@ -386,11 +333,11 @@ func verify_eight{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     ids.sf1 = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.sf2 = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
   %}
-  let (result) = eight(s, f, sf1, sf2, cache)
+  let (result) = eight(s, f, sf1, sf2)
   return (result)
 end
 
-func eight{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res):
+func eight{hash_ptr : HashBuiltin*}(s, f, sf1, sf2) -> (res):
   alloc_locals
 
   # assert f = [8 sf1 sf2]
@@ -398,26 +345,33 @@ func eight{hash_ptr : HashBuiltin*}(s, f, sf1, sf2, cache: CacheEntry*) -> (res)
   let (h_f) = hash2(x=h8, y=h_sf1_sf2)
   assert f = h_f
   
-  let (rsf1) = verify(s, sf1, cache)
+  let (rsf1) = verify(s, sf1)
   let s2 = hash2(rsf1, s)     # new subject 
-  let (rsf2) = verify(s2.result, sf2, cache)
+  let (rsf2) = verify(s2.result, sf2)
   return (rsf2)
 end
 
-func verify_nine{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res): 
+func verify_nine{hash_ptr : HashBuiltin*}(s, f) -> (res): 
   alloc_locals
 
   local axis
   local subf
+  local f2 
+  local path : felt*
   %{
     ids.axis = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.subf = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
+    ids.f2 = int(program_input['hints'][str(ids.s)][str(ids.f)][3])
+    sibs = program_input['hints'][str(ids.s)][str(ids.f)][4]
+    ids.path = path = segments.add()
+    for i, val in enumerate(sibs):
+      memory[ids.path + i] = int(val)
   %}
-  let (result) = nine(s, f, axis, subf, cache)
+  let (result) = nine(s, f, axis, subf, f2, path)
   return (result)
 end
 
-func nine{hash_ptr : HashBuiltin*}(s, f, axis, subf, cache: CacheEntry*) -> (res):
+func nine{hash_ptr : HashBuiltin*}(s, f, axis, subf, f2, path: felt*) -> (res):
   alloc_locals
 
   # assert f = [9 axis subf]
@@ -426,32 +380,37 @@ func nine{hash_ptr : HashBuiltin*}(s, f, axis, subf, cache: CacheEntry*) -> (res
   let (h_f) = hash2(x=h9, y=h_axis_subf)
   assert f = h_f
 
-  let (rsubf) = verify(s, subf, cache)
+  let (rsubf) = verify(s, subf)
 
-  let (f2) = lookup_cache(cache, rsubf, axis)
-  let (result) = verify(rsubf, f2, cache)
+  let (root) = root_from_axis(axis, f2, path)
+  assert root = rsubf
+  let (result) = verify(rsubf, f2)
   return (result)
 end
 
-func verify_ten{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_ten{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
 
   local axis
   local subf1
   local subf2
-  local new_root
+  local old_leaf 
   local path : felt*
   %{
     ids.axis = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.subf1 = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
     ids.subf2 = int(program_input['hints'][str(ids.s)][str(ids.f)][3])
-    ids.new_root = int(program_input['hints'][str(ids.s)][str(ids.f)][4])
+    ids.old_leaf = int(program_input['hints'][str(ids.s)][str(ids.f)][4])
+    sibs = program_input['hints'][str(ids.s)][str(ids.f)][5]
+    ids.path = path = segments.add()
+    for i, val in enumerate(sibs):
+      memory[ids.path + i] = int(val)
   %}
-  let (result) = ten(s, f, axis, subf1, subf2, new_root, cache)
+  let (result) = ten(s, f, axis, subf1, subf2, old_leaf, path)
   return (result)
 end
 
-func ten{hash_ptr : HashBuiltin*}(s, f, axis, subf1, subf2, new_root, cache: CacheEntry*) -> (res):
+func ten{hash_ptr : HashBuiltin*}(s, f, axis, subf1, subf2, old_leaf, path: felt*) -> (res):
   alloc_locals
 
   # assert f = [10 [axis subf1] subf2]
@@ -461,15 +420,16 @@ func ten{hash_ptr : HashBuiltin*}(s, f, axis, subf1, subf2, new_root, cache: Cac
   let (h_f) = hash2(h10, h_axis_subf1_subf2)
   assert f = h_f
 
-  let (leafSub) = verify(s, subf1, cache)
-  let (treeSub) = verify(s, subf2, cache)
+  let (rsf1) = verify(s, subf1)
+  let (rsf2) = verify(s, subf2)
 
-  let (leaf) = slot(treeSub, new_root, axis)
-  assert leafSub = leaf
+  let (root) = root_from_axis(axis, old_leaf, path)
+  assert root = rsf2
+  let (new_root) = root_from_axis(axis, rsf1, path) 
   return (new_root)
 end
 
-func verify_cons{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify_cons{hash_ptr : HashBuiltin*}(s, f) -> (res):
 alloc_locals
 
   local subf1
@@ -478,24 +438,24 @@ alloc_locals
     ids.subf1 = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.subf2 = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
   %}
-  let (result) = cons(s, f, subf1, subf2, cache)
+  let (result) = cons(s, f, subf1, subf2)
   return (result)
 end
 
-func cons{hash_ptr : HashBuiltin*}(s, f, subf1, subf2, cache: CacheEntry*) -> (res):
+func cons{hash_ptr : HashBuiltin*}(s, f, subf1, subf2) -> (res):
 alloc_locals
 
   # assert f = [subf1 subf2]
   let (hf) = hash2(subf1, subf2)
   assert hf = f
 
-  let (res1) = verify(s, subf1, cache)
-  let (res2) = verify(s, subf2, cache)
+  let (res1) = verify(s, subf1)
+  let (res2) = verify(s, subf2)
   let (result) = hash2(res1, res2)
   return (result)
 end
 
-func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
+func verify{hash_ptr : HashBuiltin*}(s, f) -> (res):
   alloc_locals
   # lookup (s, f); make a Nock struct
   # jump based on value of the opcode in struct
@@ -510,7 +470,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode
   %}
   jmp notzero if [ap] != 0; ap++
-  let (result) = verify_zero(s, f, cache)
+  let (result) = verify_zero(s, f)
   return (result)
 
   notzero:
@@ -518,7 +478,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 1
   %}
   jmp notone if [ap] != 0; ap++
-  let (result) = verify_one(s, f, cache)
+  let (result) = verify_one(s, f)
   return (result)
 
   notone:
@@ -526,7 +486,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 2
   %}
   jmp nottwo if [ap] != 0; ap++
-  let (result) = verify_two(s, f, cache)
+  let (result) = verify_two(s, f)
   return (result)
 
   nottwo:
@@ -534,7 +494,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 3
   %}
   jmp notthree if [ap] != 0; ap++
-  let (result) = verify_three(s, f, cache)
+  let (result) = verify_three(s, f)
   return (result)
 
   notthree:
@@ -542,7 +502,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 4 
   %}
   jmp notfour if [ap] != 0; ap++
-  let (result) = verify_four(s, f, cache)
+  let (result) = verify_four(s, f)
   return (result)
 
   notfour:
@@ -550,7 +510,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 5
   %}
   jmp notfive if [ap] != 0; ap++
-  let (result) = verify_five(s, f, cache)
+  let (result) = verify_five(s, f)
   return (result)
 
   notfive:
@@ -558,7 +518,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 6
   %}
   jmp notsix if [ap] != 0; ap++
-  let (result) = verify_six(s, f, cache)
+  let (result) = verify_six(s, f)
   return (result)
 
   notsix:
@@ -566,7 +526,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 7
   %}
   jmp notseven if [ap] != 0; ap++
-  let (result) = verify_seven(s, f, cache)
+  let (result) = verify_seven(s, f)
   return (result)
 
   notseven:
@@ -574,7 +534,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 8
   %}
   jmp noteight if [ap] != 0; ap++
-  let (result) = verify_eight(s, f, cache)
+  let (result) = verify_eight(s, f)
   return (result)
 
   noteight:
@@ -582,7 +542,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 9
   %}
   jmp notnine if [ap] != 0; ap++
-  let (result) = verify_nine(s, f, cache)
+  let (result) = verify_nine(s, f)
   return (result)
 
   notnine:
@@ -590,106 +550,31 @@ func verify{hash_ptr : HashBuiltin*}(s, f, cache: CacheEntry*) -> (res):
     memory[ap] = ids.opcode - 10
   %}
   jmp notten if [ap] != 0; ap++
-  let (result) = verify_ten(s, f, cache)
+  let (result) = verify_ten(s, f)
   return (result)
 
   notten:
   # only thing left is cons which we are using opcode=100 for 
   assert opcode = 100 
-  let (result) = verify_cons(s, f, cache)
+  let (result) = verify_cons(s, f)
   return (result)
 end
 
-# Cached nock 0 lookup [sub 0 axis]
-struct CacheEntry:
-  member sub : felt    # hash of subject
-  member axis : felt   
-  member leaf : felt    # hash of result
-end
-
-# Build cache of nock 0s from input
-func load_cache{hash_ptr : HashBuiltin*}(n : felt, cache_start : CacheEntry*, cache_end : CacheEntry*) -> (cache : CacheEntry*):
-  alloc_locals
-
-  local sub
-  local axis
-  %{
-    rzc = program_input['zero-cache']['reverse-zc']
-    if str(ids.n) in rzc:
-      data = list(rzc[str(ids.n)].items())[0]
-      ids.sub = int(data[0])
-      ids.axis = int(data[1])
-    else:
-      ids.sub = 0
-      ids.axis = 0
-  %}
-
-  if sub == 0:
-    # end of cache entries to load
-    return (cache_end)
-  end
-
-  let (leaf) = leaf_from_axis(sub, axis, cache_start, n)
-  cache_end.sub = sub
-  cache_end.axis = axis
-  cache_end.leaf = leaf
-
-  return load_cache(n=n + 1, cache_start = cache_start, cache_end=cache_end + CacheEntry.SIZE)
-end
-
-
-# Lookup nock 0 in cache
-func lookup_cache(cache: CacheEntry*, sub : felt, axis : felt) -> (res):
-  let (res) = lookup_cache_safe(cache, -1, sub, axis)
-  return (res)
-end
-
-# cache lookup with bounds checking
-func lookup_cache_safe(cache: CacheEntry*, cache_size : felt, sub : felt, axis : felt) -> (res):
-  alloc_locals
-
-  local index
-  local found
-  %{
-    d = program_input['zero-cache']['zc']
-    if str(ids.sub) in d and str(ids.axis) in d[str(ids.sub)]: 
-      ids.index = d[str(ids.sub)][str(ids.axis)]
-      if ids.cache_size > -1 and ids.index >= ids.cache_size:
-        ids.found = 0
-      else:
-        ids.found = 1
-    else:
-      ids.found = 0
-  %}
-
-  if found == 0:
-    return (0) # not found
-  end
-
-  let entry : CacheEntry = cache[index]
-  assert entry.axis = axis
-  assert entry.sub = sub
-  return (entry.leaf)
-end
-
-func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(): 
+func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
   alloc_locals
  
-  let (cache_start : CacheEntry*) = alloc()
-  let (cache_end) = load_cache{hash_ptr=pedersen_ptr}(0, cache_start=cache_start, cache_end=cache_start)
-
   local s
   local f
   %{
     ids.s = int(program_input['subject'])
     ids.f = int(program_input['formula'])
   %}
-  let (result) = verify{hash_ptr=pedersen_ptr}(s=s, f=f, cache=cache_start)
+  let (result) = verify{hash_ptr=pedersen_ptr}(s=s, f=f)
 
   %{
-    print(f"s=  {ids.s}")
-    print(f"f=  {ids.f}")
-    print(f"res={ids.result}")
+    print(ids.s)
+    print(ids.f)
+    print(ids.result)
   %}
 
   serialize_word(s)
@@ -697,4 +582,3 @@ func main{output_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
   serialize_word(result)
   return ()
 end
-
