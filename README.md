@@ -32,7 +32,7 @@ Zink is a lib which you build in the dojo and keep your cache in the dojo's subj
 # Now fib-5.json is in PIER/.urb/put and you can pass it to cairo.
 # hash-noun will give you just a hash
 =r (~(hash-noun zink:z +>.r) [1 2 3])
--.r # 2.883.008.663.257.391.927.749.857.999.551.534.919.434.325.165.040.299.067.136.050.868.641.506.287.321
+> -.r # 2.883.008.663.257.391.927.749.857.999.551.534.919.434.325.165.040.299.067.136.050.868.641.506.287.321
 # note that after hash noun the cache is now in +<.r
 
 ```
