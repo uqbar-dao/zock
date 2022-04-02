@@ -1,6 +1,6 @@
 
 ## commands
-[Install CAIRO -- use python3.9, not 3.7](https://www.cairo-lang.org/docs/quickstart.html)
+[Install CAIRO -- use python3.7](https://www.cairo-lang.org/docs/quickstart.html)
 
 ### Set up zink preprocessor
 This requires pedersen hash which is currently in a branch of a fork of urbit.
