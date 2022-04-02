@@ -21,6 +21,7 @@
     ^-  [res=* hint-js=@t c=(map * phash)]
     =/  [res=* st=[h=hints c=(map * phash)]]
           (~(eval eval-door [~ cache]) n)
+    =.  cache  c.st
     =/  ch  (create-hints n h.st)
     [res (crip (en-json:html js.ch)) cache.ch]
   ::  compile a hoon file and evaluate it with zink
