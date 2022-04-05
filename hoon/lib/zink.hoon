@@ -34,6 +34,8 @@
       (slap !>(~) (ream libsrc))
     =/  src  .^(@t %cx file)
     =/  cs  (slap clib (ream src))
+    ~&  >  "clib={<clib>}"
+    ~&  >  "cs={<cs>}"
     =/  nock  [q.cs q:(~(mint ut p.cs) %noun (make-hoon arm sample))]
     (eval-noun nock)
   ::  create hoon AST to call core
@@ -65,7 +67,9 @@
       =^  sroot  c  (hash s)
       =^  froot  c  (hash f)
       |^
-      ::~&  >  "{<s>}  {<f>}"
+      ::~&  >  "s={<s>}"
+      ::~&  >  "f={<f>}"
+      =/  r
       ?+    -.f  !!
         ::  formula is a cell; do distribution
         ::
@@ -158,6 +162,10 @@
         ::
           %8
         =/  [subf1=* subf2=*]  [+<.f +>.f]
+        ~&  >  "s={<s>}"
+        ~&  >  "f={<f>}"
+        =/  mjet  (jet subf1 subf2)
+        ~&  >  "jet={<mjet>}"
         =^  hsubf1  c  (hash subf1)
         =^  hsubf2  c  (hash subf2)
         =^  res1  st
@@ -169,6 +177,9 @@
           %9
         =/  [axis=* subf1=*]  [+<.f +>.f]
         ?>  ?=(@ axis)
+        ::~&  >  "s={<s>}"
+        ::~&  >  "f={<f>}"
+        ::?.  ?=(mjet ~)
         =^  hsubf1  c  (hash subf1)
         =^  res1  st
           (eval [s subf1])
@@ -203,6 +214,36 @@
         =/  subf1=*  +>.f
         (eval [s subf1])
       ==
+      ::~&  >  "p={<-.r>}"
+      r
+      :: Check if we are calling an arm in a core and if so lookup the axis
+      :: in the jet map
+      :: Calling convention is
+      :: [8 [9 JET-AXIS 0 CORE-AXIS] 9 2 10 [6 MAKE-SAMPLE] 0 2]
+      :: If we match this then look up JET-AXIS in the jet map to see if we're
+      :: calling a jetted arm.
+      ::
+      :: Note that this arm should only be called on an 8
+      ++  jet
+        |=  [subf1=* subf2=*]
+        ^-  (unit @tas)
+        ?.  &(=(-.subf1 9) =(-.subf2 9))  ~  :: both subformulae must be 9s
+        =/  [axis9-1=@ subf9-1=*]  [+<.subf1 +>.subf1]
+        =/  [axis9-2=@ subf9-2=*]  [+<.subf2 +>.subf2]
+        ?.  =(subf9-1 [0 15])  ~     :: [0 15] finds the stdlib core
+
+
+
+
+
+        ?.  =(%10 -.subf)  ~
+        ::?.  |(=(%10 -.subf) ?@(subf)) ~
+        =/  [axis-10=* sample-sub=* core-sub=*]  [+<-.subf +<+.subf +>.subf]
+        ~&  >  "axis={<axis>} axis-10={<axis-10>} sample-sub={<sample-sub>} core-sub={<core-sub>}"
+        ?^  axis-10  ~
+        ?.  =(axis-10 6)  ~  :: wrong sample to call an arm
+        =/  j  (~(get by jets) axis)
+        j
       ::
       ++  put-hint
         |=  hin=hint
@@ -241,8 +282,7 @@
       ^-  [phash (map * phash)]
       =*  c  c.st
       =/  mh  (~(get by c) n)
-      ?.  ?=(~ mh)
-        [u.mh c]
+      ?^  mh  [u.mh c]
       ?@  n
         =/  h  (hash:pedersen:secp:crypto n 0)
         [h (~(put by c) n h)]
