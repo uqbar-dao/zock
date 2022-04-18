@@ -22,6 +22,7 @@ const h8 = 274379464805683914756619079273870032577953855006323353169157347929503
 const h9 = 3149011590233272225803080114059308917528748800879621812239443987136907759492
 const h10 = 2466881358002133364822637278001945633159199669109451817445969730922553850042
 const h11 = 1602195742608144856779311879863141684990052756940086705696922586637104021594
+const h0_2 2920760503393641840990351232074818450843248133728638245225608299873225911759 # hash([0 2])
 
 # axis: axis of leaf in noun 
 # leaf: hashed value or root of subtree
@@ -457,6 +458,108 @@ alloc_locals
   return (result)
 end
 
+func verify_jet{hash_ptr : HashBuiltin*}(s, f, l : felt*) -> (res):
+  alloc_locals
+
+  local head 
+  local next
+  local arm_axis
+  local core_axis
+  local sam 
+  %{
+    ids.head = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
+    ids.next = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
+    ids.arm_axis = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
+    ids.core_axis = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
+    ids.sam = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
+  %}
+
+  let (result) = jet(s, f, head, next, arm_axis, core_axis, sam, l)
+  return (result)
+end
+
+# Check that we are trying to call an arm in a core, then check that the arm_axis
+# is a jet. If so run the jet instead of evaluating the nock.
+# The calling convention is:
+# [8 [9 ARM-AXIS 0 CORE-AXIS] 9 2 10 [6 MAKE-SAMPLE] 0 2]
+# So check that head is [9 arm_axis 0 core_axis], then check that
+# next is [9 2 10 [6 sam] 0 2]
+func jet{hash_ptr : HashBuiltin*}(s, f, head, next, arm_axis, core_axis, sam, l : felt*) -> (res):
+  alloc_locals
+
+  # verify that f is [8 head next]
+  let (h_head_next) = hash2(head, next)
+  let (hf) = hash2(h8, h_head_next)
+  assert f = hf
+
+  # Verify that head is [9 arm_axis 0 core_axis]
+  let (h_corea) = hash2(core_axis, 0)
+  let (h_arma) = hash2(arm_axis, 0)
+  let (h0_corea) = hash2(h0, h_corea)
+  let (h_arm_core) = hash2(h_arma, h0_corea)
+  let (hf) = hash2(h9, h_arm_core)
+  assert head = hf 
+
+  # Verify that next is [9 2 10 [6 sam] 0 2]
+  let (hash_1) = hash2(h6, sam)
+  let (hash_2) = hash2(hash_1, h0_2)
+  let (hash_3) = hash2(h10, hash_2)
+  let (hash_4) = hash2(h2, hash_3)
+  let (h_next) = hash2(h9, hash_4)
+  assert next = h_next
+
+  # We have an arm call. Now compute the sample. 
+  # Remember we're in an 8 so we want to evaluate:
+  # =/  sub  .*(s head)
+  # =/  arg  .*(sub^s sam)  :: pin result to head of subject (nock 8)
+  # and arg is the hash of our jet sample
+  let (sub) = verify(s, head, l)
+  let (new_sub) = hash2(sub, s)
+  let (arg) = verify(new_sub, sam)
+
+  # OK now call jet ARM_AXIS with sample ARG. 
+  let (result) = call_jet(arm_axis, sample)
+  return (result)
+end
+
+func call_jet(arm_axis, sample) -> (res):
+  ap += SIZEOF_LOCALS
+
+  local labels : felt*
+
+  let (label_array) = alloc()
+  let (addloc) = get_label_location(add)
+  let (decloc) = get_label_location(dec)
+  let (mulloc) = get_label_location(mul)
+  let (doubleloc) = get_label_location(double)
+  assert label_array[0] = addloc
+  assert lable_array(1] = decloc
+  assert label_array[2] = mulloc
+  assert label_array[3] = doubleloc
+  labels = label_array
+
+  local label
+  %{
+        
+
+    ids.label = memory[ids.labels + opcode]
+  %}
+
+
+  add:
+
+  dec:
+
+  mul:
+
+  double:
+
+
+
+
+end
+
+
 func verify{hash_ptr : HashBuiltin*}(s, f, l : felt*) -> (res):
   ap += SIZEOF_LOCALS
 
@@ -475,6 +578,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, l : felt*) -> (res):
     let (l9loc) = get_label_location(nine)
     let (l10loc) = get_label_location(ten)
     let (consloc) = get_label_location(cons)
+    let (jetloc) = get_label_location(jet)
     assert label_array[0] = l0loc
     assert label_array[1] = l1loc
     assert label_array[2] = l2loc
@@ -487,6 +591,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, l : felt*) -> (res):
     assert label_array[9] = l9loc
     assert label_array[10] = l10loc
     assert label_array[11] = consloc
+    assert label_array[12] = jetloc
     labels = label_array
   else:
     labels = l
@@ -497,6 +602,8 @@ func verify{hash_ptr : HashBuiltin*}(s, f, l : felt*) -> (res):
     element0 = program_input['hints'][str(ids.s)][str(ids.f)][0]
     if element0 == 'cons':
       opcode = 11 
+    else if element0 == 'jet':
+      opcode = 12
     else:
       opcode = int(element0)
     ids.label = memory[ids.labels + opcode]
@@ -567,6 +674,11 @@ func verify{hash_ptr : HashBuiltin*}(s, f, l : felt*) -> (res):
   cons:
   let hash_ptr = cast([ap - 3], HashBuiltin*)
   let (result) = verify_cons([ap - 2], [ap - 1], cast([ap - 4], felt*))
+  return (result)
+
+  jet:
+  let hash_ptr = cast([ap - 3], HashBuiltin*)
+  let (result) = verify_jet([ap - 2], [ap - 1], cast([ap - 4], felt*))
   return (result)
 end
 
