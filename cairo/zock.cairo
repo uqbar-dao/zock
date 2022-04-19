@@ -661,6 +661,8 @@ func verify{hash_ptr : HashBuiltin*}(s, f, l : felt*, j : felt*) -> (res):
     ids.label = memory[ids.labels + opcode]
   %}
 
+  # stash all the variables with the ap register so they don't get revoked
+  # after the jump
   [ap] = j; ap++
   [ap] = labels; ap++
   [ap] = hash_ptr; ap++
