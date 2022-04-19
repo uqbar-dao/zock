@@ -9,6 +9,10 @@ from starkware.cairo.common.math import abs_value
 from starkware.cairo.common.math import sign 
 from starkware.cairo.common.alloc import alloc
 
+from jets import add_jet
+from jets import dec_jet
+from jets import mul_jet
+
 # constants of common integer hashes
 const h0 = 2089986280348253421170679821480865132823066470938446095505822317253594081284
 const h1 = 1089549915800264549621536909767699778745926517555586332772759280702396009108
@@ -22,7 +26,7 @@ const h8 = 274379464805683914756619079273870032577953855006323353169157347929503
 const h9 = 3149011590233272225803080114059308917528748800879621812239443987136907759492
 const h10 = 2466881358002133364822637278001945633159199669109451817445969730922553850042
 const h11 = 1602195742608144856779311879863141684990052756940086705696922586637104021594
-const h0_2 2920760503393641840990351232074818450843248133728638245225608299873225911759 # hash([0 2])
+const h0_2 = 2920760503393641840990351232074818450843248133728638245225608299873225911759 # hash([0 2])
 
 # axis: axis of leaf in noun 
 # leaf: hashed value or root of subtree
@@ -469,9 +473,9 @@ func verify_jet{hash_ptr : HashBuiltin*}(s, f, l : felt*) -> (res):
   %{
     ids.head = int(program_input['hints'][str(ids.s)][str(ids.f)][1])
     ids.next = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
-    ids.arm_axis = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
-    ids.core_axis = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
-    ids.sam = int(program_input['hints'][str(ids.s)][str(ids.f)][2])
+    ids.arm_axis = int(program_input['hints'][str(ids.s)][str(ids.f)][3])
+    ids.core_axis = int(program_input['hints'][str(ids.s)][str(ids.f)][4])
+    ids.sam = int(program_input['hints'][str(ids.s)][str(ids.f)][5])
   %}
 
   let (result) = jet(s, f, head, next, arm_axis, core_axis, sam, l)
@@ -486,6 +490,18 @@ end
 # next is [9 2 10 [6 sam] 0 2]
 func jet{hash_ptr : HashBuiltin*}(s, f, head, next, arm_axis, core_axis, sam, l : felt*) -> (res):
   alloc_locals
+
+  #local ps = s
+  #%{
+    #print("jet")
+    #print(ids.s)
+    #print(ids.f)
+    #print(ids.head)
+    #print(ids.next)
+    #print(ids.arm_axis)
+    #print(ids.core_axis)
+    #print(ids.sam)
+  #%}
 
   # verify that f is [8 head next]
   let (h_head_next) = hash2(head, next)
@@ -506,6 +522,14 @@ func jet{hash_ptr : HashBuiltin*}(s, f, head, next, arm_axis, core_axis, sam, l 
   let (hash_3) = hash2(h10, hash_2)
   let (hash_4) = hash2(h2, hash_3)
   let (h_next) = hash2(h9, hash_4)
+  #%{
+    #print("hashes")
+    #print(ids.hash_1)
+    #print(ids.hash_2)
+    #print(ids.hash_3)
+    #print(ids.hash_4)
+    #print(ids.h_next)
+  #%}
   assert next = h_next
 
   # We have an arm call. Now compute the sample. 
@@ -515,14 +539,21 @@ func jet{hash_ptr : HashBuiltin*}(s, f, head, next, arm_axis, core_axis, sam, l 
   # and arg is the hash of our jet sample
   let (sub) = verify(s, head, l)
   let (new_sub) = hash2(sub, s)
-  let (arg) = verify(new_sub, sam)
+  #%{
+    #print(f"head: {ids.head}")
+    #print(f"sub: {ids.sub}")
+    #print(f"s: {ids.s}")
+    #print(f"new_sub: {ids.new_sub}") 
+    #print(f"sub: {ids.sam}")
+  #%}
+  let (arg) = verify(new_sub, sam, l)
 
   # OK now call jet ARM_AXIS with sample ARG. 
-  let (result) = call_jet(arm_axis, sample)
+  let (result) = call_jet(s, f, arm_axis, sam)
   return (result)
 end
 
-func call_jet(arm_axis, sample) -> (res):
+func call_jet(s, f, arm_axis, sample) -> (res):
   ap += SIZEOF_LOCALS
 
   local labels : felt*
@@ -533,30 +564,73 @@ func call_jet(arm_axis, sample) -> (res):
   let (mulloc) = get_label_location(mul)
   let (doubleloc) = get_label_location(double)
   assert label_array[0] = addloc
-  assert lable_array(1] = decloc
+  assert label_array[1] = decloc
   assert label_array[2] = mulloc
   assert label_array[3] = doubleloc
   labels = label_array
 
   local label
   %{
-        
-
-    ids.label = memory[ids.labels + opcode]
+    # jet axis (in hoon) -> label array offset (in cairo)
+    dict = {
+      20:0, # add
+      21:1, # dec
+      4:2,  # mul
+      11:3 # double
+      }
+    jet = dict.get(ids.arm_axis, "invalid axis")
+    ids.label = memory[ids.labels + jet]  
   %}
 
+  [ap] = s; ap++
+  [ap] = f; ap++
+  [ap] = sample; ap++
+
+  jmp abs label
 
   add:
+  let sub = [ap - 3]
+  let form = [ap - 2]
+  local arg1
+  local arg2
+  %{
+    ids.arg1 = int(program_input['hints'][str(ids.sub)][str(ids.form)][6]['arg1'])
+    ids.arg2 = int(program_input['hints'][str(ids.sub)][str(ids.form)][6]['arg2'])
+  %}
+  let (result) = add_jet(arg1, arg2)
+  return (result)
 
   dec:
+  let sub = [ap - 3]
+  let form = [ap - 2]
+  local arg
+  %{
+    ids.arg = int(program_input['hints'][str(ids.sub)][str(ids.form)][6]['arg'])
+  %}
+  let (result) = dec_jet(arg)
+  return (result)
 
   mul:
+  let sub = [ap - 3]
+  let form = [ap - 2]
+  local arg1
+  local arg2
+  %{
+    ids.arg1 = int(program_input['hints'][str(ids.sub)][str(ids.form)][6]['arg1'])
+    ids.arg2 = int(program_input['hints'][str(ids.sub)][str(ids.form)][6]['arg2'])
+  %}
+  let (result) = mul_jet(arg1, arg2)
+  return (result)
 
   double:
-
-
-
-
+  let sub = [ap - 3]
+  let form = [ap - 2]
+  local arg
+  %{
+    ids.arg = int(program_input['hints'][str(ids.sub)][str(ids.form)][6]['arg'])
+  %}
+  let (result) = mul_jet(arg, 2)
+  return (result)
 end
 
 
@@ -602,7 +676,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, l : felt*) -> (res):
     element0 = program_input['hints'][str(ids.s)][str(ids.f)][0]
     if element0 == 'cons':
       opcode = 11 
-    else if element0 == 'jet':
+    elif element0 == 'jet':
       opcode = 12
     else:
       opcode = int(element0)
