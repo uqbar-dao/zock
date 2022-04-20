@@ -1,5 +1,3 @@
-#%builtins range_check
-
 from starkware.cairo.common.math import unsigned_div_rem, assert_nn
 from starkware.cairo.common.math_cmp import is_le_felt 
 from starkware.cairo.common.bool import TRUE, FALSE
@@ -39,7 +37,7 @@ func loob(a : felt) -> (l : felt):
     return (result)
 end
 
-# MARK - 1a
+# MARK - 1a: Basic Arithmetic
 
 # TODO handle atom <-> cairo overflow/edge cases
 
@@ -146,3 +144,22 @@ func sub{range_check_ptr}(a : felt, b : felt) -> (res : felt):
     assert_nn(result)  # hoon crashes on subtraction underflow
     return (result)
 end
+
+
+# MARK - 2c: Bit Arithmetic
+
+# from the https://urbit.org/docs/hoon/reference/stdlib/1c#bloq, 
+# bloq is an "Atom representing block size. A block of size a has a bitwidth of 2^a."
+
+using bloq = felt
+
+# todo use common.pow
+func bex(a : bloq) -> (res : felt):
+    if a == 0:
+        return (1)
+    else:
+        let (bex_prv) = bex(a - 1)
+        return (2 * bex_prv)
+    end
+end
+
