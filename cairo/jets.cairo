@@ -2,6 +2,7 @@ from starkware.cairo.common.math import unsigned_div_rem, assert_nn
 from starkware.cairo.common.math_cmp import is_le_felt 
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.pow import pow
+from pow2 import pow2
 
 const YES = 0
 const NO = 1
@@ -156,7 +157,7 @@ using bloq = felt
 
 # could try https://cp-algorithms.com/algebra/binary-exp.html
 # for more performant general exp and then special casing here
-func bex{range_check_ptr}(a : bloq) -> (res : felt):
+func bex(a : bloq) -> (res : felt):
     # if a == 0:
     #     return (1)
     # else:
@@ -166,6 +167,11 @@ func bex{range_check_ptr}(a : bloq) -> (res : felt):
 
     # 50 more steps and 97 more memory cells used by pow vs. naive recursion
     # however, pow might perform better for large exponents. remains to be seen
-    return pow(2, a)
+    # return pow(2, a)
+
+    # the lookup table pow2 uses 19 less steps
+    # but has the obvious penalty of storing the LUT
+
+    return pow2(a)
 end
 
