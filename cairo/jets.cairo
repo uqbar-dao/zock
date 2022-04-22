@@ -157,6 +157,7 @@ using bloq = felt
 
 # could try https://cp-algorithms.com/algebra/binary-exp.html
 # for more performant general exp and then special casing here
+
 func bex(a : bloq) -> (res : felt):
     # if a == 0:
     #     return (1)
@@ -171,6 +172,8 @@ func bex(a : bloq) -> (res : felt):
 
     # the lookup table pow2 uses 19 less steps
     # but has the obvious penalty of storing the LUT
+    # and also only handles a in [0, 250],
+    # whereas pow handles a in [0, 2^251]
 
     return pow2(a)
 end
