@@ -1,8 +1,8 @@
-#%builtins range_check
-
 from starkware.cairo.common.math import unsigned_div_rem, assert_nn
 from starkware.cairo.common.math_cmp import is_le_felt 
 from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.pow import pow
+from pow2 import pow2
 
 const YES = 0
 const NO = 1
@@ -39,7 +39,7 @@ func loob(a : felt) -> (l : felt):
     return (result)
 end
 
-# MARK - 1a
+# MARK - 1a: Basic Arithmetic
 
 # TODO handle atom <-> cairo overflow/edge cases
 
@@ -146,3 +146,35 @@ func sub{range_check_ptr}(a : felt, b : felt) -> (res : felt):
     assert_nn(result)  # hoon crashes on subtraction underflow
     return (result)
 end
+
+
+# MARK - 2c: Bit Arithmetic
+
+# from the https://urbit.org/docs/hoon/reference/stdlib/1c#bloq, 
+# bloq is an "Atom representing block size. A block of size a has a bitwidth of 2^a."
+
+using bloq = felt
+
+# could try https://cp-algorithms.com/algebra/binary-exp.html
+# for more performant general exp and then special casing here
+
+func bex(a : bloq) -> (res : felt):
+    # if a == 0:
+    #     return (1)
+    # else:
+    #     let (bex_prv) = bex(a - 1)
+    #     return (2 * bex_prv)
+    # end
+
+    # 50 more steps and 97 more memory cells used by pow vs. naive recursion
+    # however, pow might perform better for large exponents. remains to be seen
+    # return pow(2, a)
+
+    # the lookup table pow2 uses 19 less steps
+    # but has the obvious penalty of storing the LUT
+    # and also only handles a in [0, 250],
+    # whereas pow handles a in [0, 2^251]
+
+    return pow2(a)
+end
+
