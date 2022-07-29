@@ -533,7 +533,7 @@ func call_jet(s, f, arm_axis, sample, j : felt*, n: felt) -> (res):
   local labels : felt*
 
   if j == 0:
-    let (label_array) = alloc()
+    let (label_array : felt**) = alloc()
     let (addloc) = get_label_location(add)
     let (decloc) = get_label_location(dec)
     let (mulloc) = get_label_location(mul)
@@ -617,7 +617,7 @@ func verify{hash_ptr : HashBuiltin*}(s, f, l : felt*, j : felt*, n : felt) -> (r
 
   local labels : felt*
   if l == 0:
-    let (label_array) = alloc()
+    let (label_array : felt**) = alloc()
     let (l0loc) = get_label_location(zero)
     let (l1loc) = get_label_location(one)
     let (l2loc) = get_label_location(two)
